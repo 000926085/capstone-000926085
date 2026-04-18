@@ -1,5 +1,6 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
+from supabase_client import supabase
 import requests
 
 app = FastAPI()
@@ -10,6 +11,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+@app.get("/api/fetch-users")
+def fetch_users():
+    return supabase.table("users").select("*", count="exact").execute()
 
 @app.get("/api/fetch-anime/{anilist_id}")
 def fetch_anime(anilist_id: int):
