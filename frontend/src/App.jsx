@@ -6,21 +6,21 @@ import './App.css'
 
 function App() {
   const [count, setCount] = useState(0)
-  const [msg, setMsg] = useState("Loading...");
+  const [anime, setAnime] = useState(null);
 
   useEffect(() => {
-    fetch(`http://localhost:8000/api/hello`)
+    fetch(`http://localhost:8000/api/fetch-anime/1`)
       .then((res) => res.json())
       .then((data) => {
-        setMsg(data.message); 
+        setAnime(data); 
       });
   }, []);
 
   return (
     <>
       <h2>Testing!</h2>
-      {msg &&
-        <p>{msg}</p>
+      {anime &&
+        <p>AniList ID = {anime.data?.Media?.id}, {anime.data?.Media?.title?.romaji}</p>
       }
     </>
   )
