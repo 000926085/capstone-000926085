@@ -14,7 +14,20 @@ app.add_middleware(
 
 @app.get("/api/fetch-users")
 def fetch_users():
-    return supabase.table("users").select("*", count="exact").execute()
+    return (
+        supabase.table("users")
+        .select("*", count="exact")
+        .execute()
+    )
+
+@app.post("/api/insert-anime")
+def insert_anime(anime: list[dict]):
+    return (
+        supabase
+        .table("anime")
+        .upsert(anime, on_conflict="anilist_id")
+        .execute()
+    )
 
 @app.get("/api/fetch-anime/{anilist_id}")
 def fetch_anime(anilist_id: int):
