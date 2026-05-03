@@ -2,7 +2,8 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from supabase_client import supabase
 import requests
-import helpers
+import functions.helpers as helpers
+import functions.calculations as calculations
 
 app = FastAPI()
 app.add_middleware(
@@ -31,6 +32,19 @@ def import_anilist_user(username: str):
                             english
                             romaji
                         }
+                        genres
+                        tags {
+                            name
+                            isAdult
+                        }
+                        studios {
+                            edges {
+                                node {
+                                    name
+                                }
+                                isMain
+                            }
+                        }
                         id
                         format
                         episodes
@@ -51,6 +65,7 @@ def import_anilist_user(username: str):
                         status
                     }
                     status
+                    score
                 }
             }
         }
@@ -67,34 +82,29 @@ def import_anilist_user(username: str):
     avatar = data.get("User").get("avatar").get("large")
     list_data = data.get("MediaListCollection").get("lists")
 
-    all_anime = []
-    for c in list_data:
-        if not c.get("isCustomList"):
-            for entry in c.get("entries", []):
-                if entry.get("media", {}).get("status") != "NOT_YET_RELEASED":
-                    media = entry.get("media")
+    # Retrieve all anime from the user's list in preparation for storage.
+    all_anime = [
+        {
+            **entry["media"],
+            "user_score": entry.get("score", 0),
+            "anilist_id": entry["media"].get("id"),
+            "startDate": helpers.format_date(entry["media"].get("startDate")),
+            "endDate": helpers.format_date(entry["media"].get("endDate"))
+        }
+        for c in list_data if not c.get("isCustomList")
+        for entry in c.get("entries", [])
+        if entry.get("media", {}).get("status") != "NOT_YET_RELEASED"
+    ]
 
-                    start = helpers.format_date(media.get("startDate"))
-                    end = helpers.format_date(media.get("endDate"))
-                    anilist_id = media.pop("id", None)
-
-                    anime_record = {
-                        **media,
-                        "anilist_id": anilist_id,
-                        "startDate": start,
-                        "endDate": end
-                    }
-
-                    all_anime.append(anime_record)
-
-    supabase.rpc(
+    # Postgres function for handling behaviour when provided with a new user. 
+    """supabase.rpc(
         "user_setup",
         {
             "p_anime": all_anime,
             "p_username": username,
             "p_avatar": avatar
         }
-    ).execute()
+    ).execute()"""
 
     return all_anime
 

@@ -22,6 +22,8 @@ function App() {
       });
   }, []);
 
+  if (anime) { console.log(anime); }
+
   return (
     <>
       <h2>Testing!</h2>

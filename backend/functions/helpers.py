@@ -1,4 +1,12 @@
 def format_date(date):
+    """
+    Consolidates the year, month and day of an anime into yyyy-mm-dd format.
+
+    args:
+        date: dict, contains the y, m, d values.
+    returns:
+        str representation of a formatted date. 
+    """
     if not date:
         return None
     
