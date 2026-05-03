@@ -106,7 +106,7 @@ def import_anilist_user(username: str):
         }
     ).execute()"""
 
-    return all_anime
+    return calculations.category_mean(all_anime, "studios")
 
 @app.get("/api/fetch-users")
 def fetch_users():
