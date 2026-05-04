@@ -22,6 +22,11 @@ def import_anilist_user(username: str):
             avatar {
                 large
             }
+            statistics {
+                anime {
+                    meanScore
+                }
+            }
         }
         MediaListCollection (userName: $username, type: ANIME, status_not: REPEATING) {
             lists {
@@ -80,6 +85,7 @@ def import_anilist_user(username: str):
 
     data = response.json().get("data")
     avatar = data.get("User").get("avatar").get("large")
+    user_avg = data.get("User").get("statistics").get("anime").get("meanScore")
     list_data = data.get("MediaListCollection").get("lists")
 
     # Retrieve all anime from the user's list in preparation for storage.
@@ -106,7 +112,8 @@ def import_anilist_user(username: str):
         }
     ).execute()"""
 
-    return calculations.category_mean(all_anime, "studios")
+    studio_scores = calculations.category_mean(all_anime, "studios")
+    return calculations.affinity_score(studio_scores, user_avg)
 
 @app.get("/api/fetch-users")
 def fetch_users():
