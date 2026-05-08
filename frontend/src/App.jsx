@@ -22,11 +22,12 @@ function App() {
       });
   }, []);
 
-  if (anime) { console.log(anime); }
+  if (!anime) { return; }
+  console.log(anime.content);
 
   return (
     <>
-      <h2>Testing!</h2>
+      <h2>{anime.message}</h2>
     </>
   )
 }

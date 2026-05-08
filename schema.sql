@@ -33,7 +33,7 @@ ON public.users FOR INSERT TO authenticated WITH CHECK (true);
 
 CREATE TABLE anime (
     anime_id BIGSERIAL PRIMARY KEY,
-    anilist_id INTEGER NOT NULL,
+    anilist_id INTEGER UNIQUE NOT NULL,
     title JSONB,
     format VARCHAR,
     episodes INTEGER,
@@ -55,7 +55,8 @@ CREATE TABLE users_anime (
     user_id BIGINT REFERENCES public.users(user_id) ON DELETE CASCADE,
     anime_id BIGINT REFERENCES public.anime(anime_id) ON DELETE CASCADE,
     list_status TEXT,
-    score INTEGER 
+    score FLOAT,
+    PRIMARY KEY (user_id, anime_id)
 );
 
 ALTER TABLE public.users_anime ENABLE ROW LEVEL SECURITY;
@@ -65,8 +66,8 @@ CREATE POLICY "Enable insert for authenticated users only"
 ON public.users_anime FOR INSERT TO authenticated WITH CHECK (true);
 
 CREATE TABLE genres (
-    genre_id INTEGER PRIMARY KEY,
-    name TEXT
+    genre_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name TEXT UNIQUE
 );
 
 ALTER TABLE public.genres ENABLE ROW LEVEL SECURITY;
@@ -101,8 +102,8 @@ CREATE POLICY "Enable insert for authenticated users only"
 ON public.user_genres_affinity FOR INSERT TO authenticated WITH CHECK (true);
 
 CREATE TABLE tags (
-    tag_id INTEGER PRIMARY KEY,
-    name TEXT
+    tag_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
+    name TEXT UNIQUE
 );
 
 ALTER TABLE public.tags ENABLE ROW LEVEL SECURITY;
@@ -139,7 +140,7 @@ ON public.user_tags_affinity FOR INSERT TO authenticated WITH CHECK (true);
 
 CREATE TABLE studios (
     studio_id INTEGER GENERATED ALWAYS AS IDENTITY PRIMARY KEY,
-    anilist_id INTEGER,
+    anilist_id INTEGER UNIQUE,
     name TEXT
 );
 
