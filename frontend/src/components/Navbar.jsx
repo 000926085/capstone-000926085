@@ -13,7 +13,7 @@ export default function Navbar() {
                     <span className='slogan'>Tuned to you.</span>
                 </div>
             </div>
-            <div className='nav-buttons'>
+            <div className='nav-buttons' style={{"gap": "24px"}}>
                 <img className='img-button' src={home}></img>
                 <img className='img-button' src={login}></img>
             </div>

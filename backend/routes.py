@@ -4,6 +4,7 @@ from supabase_client import supabase
 import requests
 import functions.helpers as helpers
 import functions.calculations as calculations
+import queries as gql
 
 app = FastAPI()
 app.add_middleware(
@@ -160,37 +161,9 @@ def insert_anime(anime: list[dict]):
 
 @app.get("/api/fetch-anime/{anilist_id}")
 def fetch_anime(anilist_id: int):
-    myQuery = """
-    query ($anilist_id: Int) {
-        Media (id: $anilist_id) {
-            id
-            title {
-                english
-                romaji
-            }
-            format
-            episodes
-            status
-            startDate {
-                year
-                month
-                day
-            }
-            endDate {
-                year
-                month
-                day
-            }
-            meanScore
-            popularity
-            source
-        }
-    }
-    """
-
     url = "https://graphql.anilist.co"
     response = requests.post(url, json={
-        "query": myQuery,
+        "query": gql.FETCH_ANIME,
         "variables": {"anilist_id": anilist_id}
     })
 
