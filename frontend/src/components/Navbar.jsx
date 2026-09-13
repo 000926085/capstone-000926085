@@ -1,4 +1,3 @@
-import { useState, useEffect } from 'react'
 import logo from '../assets/logo.png'
 import home from '../assets/home.png'
 import login from '../assets/login.png'
