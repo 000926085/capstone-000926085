@@ -25,3 +25,11 @@ query ($anilist_id: Int) {
     }
 }
 """
+
+USER_EXISTS = """
+query ($username: String) {
+    User (name: $username) {
+        __typename
+    }
+}
+"""

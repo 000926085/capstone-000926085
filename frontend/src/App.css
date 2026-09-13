@@ -261,7 +261,7 @@ form {
   box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
   padding: 40px;
   width: 100%;
-  max-width: 440px;
+  max-width: 550px;
   display: flex;
   flex-direction: column;
   box-sizing: border-box;
@@ -345,4 +345,15 @@ form button {
 
 form button:hover {
   background-color: #3b8ee8;
+}
+
+.error-message {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  color: #f83838;
+  font-size: 18px;
+  font-style: italic;
+  margin-top: -16px;
+  margin-bottom: 16px;
 }
