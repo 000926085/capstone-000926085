@@ -71,49 +71,19 @@ def import_anilist_user(username: str):
 
         return {"status": "success", "message": f"User {username} successfully imported."};
     else:
-        last_updated = supabase_query.data[0]["last_updated"]
-        raise HTTPException(
-            status_code=400, 
-            detail=f"{username}'s record was already updated within the last 24 hours (last updated: {last_updated})."
-        )
-
-@app.get("/api/fetch-users")
-def fetch_users():
-    return (
-        supabase.table("users")
-        .select("*", count="exact")
-        .execute()
-    )
-
-@app.post("/api/insert-anime")
-def insert_anime(anime: list[dict]):
-    return (
-        supabase
-        .table("anime")
-        .upsert(anime, on_conflict="anilist_id")
-        .execute()
-    )
-
-@app.get("/api/fetch-anime/{anilist_id}")
-def fetch_anime(anilist_id: int):
-    url = "https://graphql.anilist.co"
-    response = requests.post(url, json={
-        "query": gql.FETCH_ANIME,
-        "variables": {"anilist_id": anilist_id}
-    })
-
-    return response.json()
+        return {"status": "success", "message": f"User {username} is up to date."
+    }
 
 @app.get("/api/user-exists/{username}")
 def user_exists(username: str):
-    url = "https://graphql.anilist.co"
-    response = requests.post(url, json={
-        "query": gql.USER_EXISTS,
-        "variables": {"username": username}
-    })
+    supabase_query = (
+        supabase.table("users")
+        .select("*", count="exact")
+        .eq("username", username)
+        .execute()
+    )
 
-    data = response.json()
-    if "errors" in data or not data.get("data", {}).get("User"):
-        raise HTTPException(status_code=404, detail="An AniList account with this username does not exist.")
+    if supabase_query.count == 0:
+        raise HTTPException(status_code=404, detail=f"User '{username}' was not found within the database.")
 
-    return True
+    return {"exists": True, "user": supabase_query.data[0]}

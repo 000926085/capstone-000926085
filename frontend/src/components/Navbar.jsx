@@ -2,6 +2,10 @@ import logo from '../assets/logo.png'
 import home from '../assets/home.png'
 import login from '../assets/login.png'
 
+/**
+ * 
+ * @returns {JSX.Element} representation of a navbar to access different routes.
+ */
 export default function Navbar() {
     return (
         <nav className="nav">

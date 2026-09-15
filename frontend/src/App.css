@@ -343,6 +343,18 @@ form button {
   transition: background-color 0.2s ease;
 }
 
+.link {
+  color: #55a3f7;
+  font-size: 18px;
+  margin-top: 4px;
+  transition: color 0.2s ease;
+}
+
+.link:hover {
+  color: #3b8ee8;
+  transition: color 0.2s ease;
+}
+
 form button:hover {
   background-color: #3b8ee8;
 }
@@ -359,4 +371,10 @@ form button:hover {
 
 .error-message {
   color: #f83838;
+}
+
+.error-subtitle {
+  font-size: 20px;
+  color: #333333;
+  margin-top: 4px;
 }

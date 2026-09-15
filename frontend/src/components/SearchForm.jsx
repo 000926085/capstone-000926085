@@ -2,12 +2,21 @@ import { useState } from 'react'
 import stars from "../assets/stars.png"
 import '../App.css'
 
-export default function SearchForm() {
+/**
+ * Renders a form to collect an AniList username and trigger the import process.
+ * @param {Function} onSuccess callback invoked with a valid username after an import
+ * @returns {JSX.Element} representation of a form for inputting a username.
+ */
+export default function SearchForm({onSuccess}) {
     const [username, setUsername] = useState('');
     const [err, setErr] = useState(null);
     const [loading, setLoading] = useState(false);
 
-    // 
+    /**
+     * Handles the form submission, input validation and triggering the callback.
+     * @param {<HTMLFormElement>} e form submission event.
+     * @returns 
+     */
     const handleSubmit = async (e) => {
         e.preventDefault();
         setErr(null);
@@ -20,6 +29,7 @@ export default function SearchForm() {
         
         setLoading(true);
 
+        // attempt to import the user by calling the AniList API.
         try {
           const res = await fetch(`http://localhost:8000/api/import-anilist-user/${username.trim()}`, {
             method: "POST",
@@ -30,11 +40,15 @@ export default function SearchForm() {
     
           if (!res.ok) {
             const err = await res.json();
-            setErr(err.detail);
+            setErr(err.detail || "An unexpected error occurred.");
             return;
           }
+
+          // redirect to the recommendations route on success.
+          onSuccess(username.trim());
+
         } catch (err) {
-            setErr("Failed to connect to the AniList API.")
+            setErr("Failed to connect to the server.")
         } finally {
           setLoading(false);
         }
