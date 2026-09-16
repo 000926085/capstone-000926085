@@ -1,6 +1,6 @@
 import { useState } from 'react'
 import stars from "../assets/stars.png"
-import '../App.css'
+import '../css/SearchForm.css'
 
 /**
  * Renders a form to collect an AniList username and trigger the import process.
@@ -21,7 +21,7 @@ export default function SearchForm({onSuccess}) {
         e.preventDefault();
         setErr(null);
     
-        // handles empty input.
+        // Handles empty input.
         if (!username.trim()) { 
           setErr("Please enter a username.")
           return;
@@ -29,7 +29,7 @@ export default function SearchForm({onSuccess}) {
         
         setLoading(true);
 
-        // attempt to import the user by calling the AniList API.
+        // Attempt to import the user by calling the AniList API.
         try {
           const res = await fetch(`http://localhost:8000/api/import-anilist-user/${username.trim()}`, {
             method: "POST",
@@ -44,7 +44,7 @@ export default function SearchForm({onSuccess}) {
             return;
           }
 
-          // redirect to the recommendations route on success.
+          // Redirect to the recommendations route on success.
           onSuccess(username.trim());
 
         } catch (err) {
@@ -57,6 +57,8 @@ export default function SearchForm({onSuccess}) {
       return (
         <>
             <form onSubmit={handleSubmit}>
+
+              {/* Form logo and title. */}
               <div className="form-logo-row">
                 <img className="site-logo" src={stars} alt="AniReco stars" />
                 <div className="title-group">
@@ -64,10 +66,14 @@ export default function SearchForm({onSuccess}) {
                   <span className="subtitle">Recommendations</span>
                 </div>
               </div>
+
+              {/* User input field. */}
               <label>
                 AniList Username
                 <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder='...'/>
               </label>
+
+              {/* Loading and error indicators. */}
               {loading && (
                 <div style={{"display": "flex", "flexDirection": "row"}}>
                   <p className="loading-message">Loading...</p>
@@ -76,6 +82,7 @@ export default function SearchForm({onSuccess}) {
               {err && (
                 <p className="error-message">{err}</p>
               )}
+
               <button type="submit">Find Recommendations</button>
             </form>
         </>
