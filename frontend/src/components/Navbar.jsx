@@ -1,3 +1,4 @@
+import { useNavigate } from 'react-router-dom'
 import logo from '../assets/logo.png'
 import home from '../assets/home.png'
 import login from '../assets/login.png'
@@ -7,6 +8,8 @@ import login from '../assets/login.png'
  * @returns {JSX.Element} representation of a navbar to access different routes.
  */
 export default function Navbar() {
+    let navigate = useNavigate();
+
     return (
         <nav className="nav">
             <div className='nav-info'>
@@ -17,8 +20,8 @@ export default function Navbar() {
                 </div>
             </div>
             <div className='nav-buttons' style={{"gap": "24px"}}>
-                <img className='img-button' src={home}></img>
-                <img className='img-button' src={login}></img>
+                <img className='img-button' src={home} title="Home" onClick={() => navigate('/')}></img>
+                <img className='img-button' src={login} title="Login"></img>
             </div>
         </nav>
     )

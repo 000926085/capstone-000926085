@@ -1,13 +1,16 @@
-import { Routes, Route, useNavigate, useParams } from 'react-router-dom'
+import { Routes, Route, useNavigate, useParams, useLocation } from 'react-router-dom'
 import { useState, useEffect } from 'react'
 import Navbar from "./components/Navbar"
 import SearchForm from './components/SearchForm'
 import Recommendations from './components/Recommendations'
+import Carousel from './components/Carousel'
 import './App.css'
 
 function App() {
+  const location = useLocation();
+
   return (
-    <>
+    <div className='wrapper'>
       <Navbar />
       <main className="container">
         <Routes>
@@ -18,7 +21,9 @@ function App() {
           <Route path="/recommendations/:username" element={<Recommendations />} />
         </Routes>
       </main>
-    </>
+      
+      {location.pathname === '/' && <Carousel />}
+    </div>
   )
 }
 

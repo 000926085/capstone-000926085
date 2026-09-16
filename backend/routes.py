@@ -87,3 +87,15 @@ def user_exists(username: str):
         raise HTTPException(status_code=404, detail=f"User '{username}' was not found within the database.")
 
     return {"exists": True, "user": supabase_query.data[0]}
+
+@app.get("/api/anime-carousel")
+def anime_carousel():
+    supabase_query = (
+        supabase.table("anime")
+        .select("*", count="exact")
+        .order("popularity", desc=True) 
+        .limit(100)
+        .execute()
+    )
+
+    return supabase_query.data

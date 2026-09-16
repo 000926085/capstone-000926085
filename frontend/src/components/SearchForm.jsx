@@ -69,7 +69,9 @@ export default function SearchForm({onSuccess}) {
                 <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder='...'/>
               </label>
               {loading && (
-                <p className="loading-message">Loading...</p>
+                <div style={{"display": "flex", "flexDirection": "row"}}>
+                  <p className="loading-message">Loading...</p>
+                </div>
               )}
               {err && (
                 <p className="error-message">{err}</p>

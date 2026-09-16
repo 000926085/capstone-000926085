@@ -5,25 +5,41 @@ import '../App.css'
 export default function Recommendations() {
     const { username } = useParams();
     const [userExists, setUserExists] = useState(null);
+    const [loading, setLoading] = useState(false);
 
     useEffect(() => {
+        let mounted = true;
+
         const checkUser = async () => {
+            setLoading(true);
+
             try {
                 const res = await fetch(`http://localhost:8000/api/user-exists/${username}`);
-                
-                if (res.ok) { setUserExists(true); }
-                else { setUserExists(false); }
-
+                if (mounted) { setUserExists(res.ok); }
             } catch (err) {
                 console.error(err);
-                setUserExists(false);
+                if (mounted) { setUserExists(false); }
+            } finally {
+                if (mounted) { setLoading(false); }
             }
+
         }
 
         checkUser();
+        return () => { mounted = false; }
     }, [username]);
 
-    if (!userExists || userExists === null) {
+    // Show a loading indicator while fetching.
+    if (loading) {
+        return (
+            <div className="status-container">
+                <h2 className="brand-name">Loading...</h2>
+            </div>
+        );
+    }
+
+    // If a user is unable to be found, display a form.
+    if (!userExists) {
         return (
             <form>
                 <h2 className="brand-name">User Not Found</h2>
@@ -33,6 +49,7 @@ export default function Recommendations() {
         )
     }
 
+    // If a user is found, show the recommendations.
     return (
         <div className="recommendations-container">
             <h2>Recommendations for {username}</h2>
