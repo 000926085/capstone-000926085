@@ -31,7 +31,7 @@ export default function SearchForm({onSuccess}) {
 
         // Attempt to import the user by calling the AniList API.
         try {
-          const res = await fetch(`http://localhost:8000/api/import-anilist-user/${username.trim()}`, {
+          const res = await fetch(`http://localhost:8000/api/import-anilist-user/${encodeURIComponent(username.trim())}`, {
             method: "POST",
             headers: {
               "Content-Type": "application/json",

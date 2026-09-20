@@ -22,7 +22,7 @@ export default function Recommendations() {
             } finally {
                 if (mounted) { setLoading(false); }
             }
-
+            
         }
 
         checkUser();

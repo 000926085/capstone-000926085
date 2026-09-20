@@ -1,10 +1,25 @@
+import logging
+from logging.handlers import RotatingFileHandler
+import trace
+import traceback
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
+from fastapi.responses import JSONResponse
 from supabase_client import supabase
 import requests
 import functions.helpers as helpers
 import functions.calculations as calculations
 import queries as gql
+
+logger = logging.getLogger("app_logger")
+logger.setLevel(logging.ERROR)
+
+file_handler = RotatingFileHandler("error.log", maxBytes=5_000_000, backupCount=1)
+formatter = logging.Formatter(
+    "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
+)
+file_handler.setFormatter(formatter)
+logger.addHandler(file_handler)
 
 app = FastAPI()
 app.add_middleware(
@@ -15,9 +30,23 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+@app.exception_handler(Exception)
+async def global_exception_handler(request: Request, exc: Exception):
+    tb = "".join(traceback.format_exception(type(exc), exc, exc.__traceback__))
+    logger.error(f"Unhandled Exception at {request.method} {request.url.path}:\n{tb}")
+    
+    return JSONResponse(
+        status_code=500,
+        content={"detail": "An internal server error occurred."}
+    )
+
+@app.get("/api/test-error")
+def test_error():
+    raise RuntimeError("Test error to verify logging functionalities.")
+
 @app.post("/api/import-anilist-user/{username}")
 def import_anilist_user(username: str):
-    # construct a supabase query to first check the database for a user.
+    # Construct a supabase query to first check the database for a user.
     supabase_query = (
         supabase.table("users")
         .select("*", count="exact")
@@ -28,10 +57,16 @@ def import_anilist_user(username: str):
     # call the api to fetch data if provided with a new or out-of-date (24 hrs) user.
     if supabase_query.count == 0 or helpers.hour_difference(supabase_query.data[0]["last_updated"]) >= 24:
         url = "https://graphql.anilist.co"
-        response = requests.post(url, json={
-            "query": gql.IMPORT_USER,
-             "variables": {"username": username}
-        })
+
+        try:
+            response = requests.post(url, json={
+                "query": gql.IMPORT_USER,
+                "variables": {"username": username}
+            })
+            response.raise_for_status()
+        except requests.RequestException as e:
+            logger.error(f"AniList API error for user '{username}': {str(e)}")
+            raise HTTPException(status_code=502, detail="Failed to communicate with AniList servers.")
 
         res_json = response.json()
         if "errors" in res_json or not res_json.get("data") or not res_json["data"].get("User"):
@@ -59,15 +94,19 @@ def import_anilist_user(username: str):
             if entry.get("media", {}).get("status") != "NOT_YET_RELEASED"
         ]
 
-        # postgres function for handling behaviour when provided with a user to setup.
-        supabase.rpc(
-            "user_setup",
-            {
-                "p_anime": all_anime,
-                "p_username": username,
-                "p_avatar": avatar
-            }
-        ).execute()
+        try:
+            # postgres function for handling behaviour when provided with a user to setup.
+            supabase.rpc(
+                "user_setup",
+                {
+                    "p_anime": all_anime,
+                    "p_username": username,
+                    "p_avatar": avatar
+                }
+            ).execute()
+        except Exception as e:
+            logger.error(f"Supabase RPC 'user_setup' failed for '{username}': {str(e)}")
+            raise
 
         return {"status": "success", "message": f"User {username} successfully imported."};
     else:

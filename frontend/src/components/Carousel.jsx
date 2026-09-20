@@ -43,18 +43,21 @@ export default function Carousel() {
     }
 
     return (
-        <div className="embla">
-            <div className="embla__viewport" ref={emblaRef}>
-                <div className="embla__container">
-                    {posters.map((anime, i) => {
-                        return (
-                            <div key={i} className='embla__slide'>
-                                <img className="anime-poster" src={anime.cover} onClick={() => openAniListPage(anime.anilist_id)}></img>
-                            </div>
-                        )
-                    })}
+        <div className={`carousel-container ${posters.length !== 0 ? 'fade-in' : ''}`}>
+            <h1 className='carousel-slogan'>Find your new favourite, with AniReco.</h1>
+            <div className={`embla ${posters.length !== 0 ? 'fade-in' : ''}`}>
+                <div className="embla__viewport" ref={emblaRef}>
+                    <div className="embla__container">
+                        {posters.map((anime, i) => {
+                            return (
+                                <div key={i} className="embla__slide">
+                                    <img className="anime-poster" src={anime.cover} onClick={() => openAniListPage(anime.anilist_id)} />
+                                </div>
+                            )
+                        })}
+                    </div>
                 </div>
             </div>
         </div>
-  )
+    )
 }
