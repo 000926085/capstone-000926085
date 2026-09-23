@@ -1,11 +1,13 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
-import '../App.css'
+import '../css/Recommendations.css'
 
 export default function Recommendations() {
     const { username } = useParams();
-    const [userExists, setUserExists] = useState(null);
-    const [loading, setLoading] = useState(false);
+    const [anime, setAnime] = useState(null);
+    const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(false);
+    const [selectedStatuses, setSelectedStatuses] = useState(["PLANNING","PAUSED"]);
 
     useEffect(() => {
         let mounted = true;
@@ -14,15 +16,18 @@ export default function Recommendations() {
             setLoading(true);
 
             try {
-                const res = await fetch(`http://localhost:8000/api/user-exists/${username}`);
-                if (mounted) { setUserExists(res.ok); }
+                const res = await fetch(`http://localhost:8000/api/fetch-anime-list/${username}`);
+                if (!res.ok) { throw new Error ("User not found."); }
+
+                const data = await res.json();
+                console.log(data);
+                if (mounted) { setAnime(data["anime"] || []); }
             } catch (err) {
                 console.error(err);
-                if (mounted) { setUserExists(false); }
+                if (mounted) { setError(true); }
             } finally {
                 if (mounted) { setLoading(false); }
             }
-            
         }
 
         checkUser();
@@ -39,7 +44,7 @@ export default function Recommendations() {
     }
 
     // If a user is unable to be found, display a form.
-    if (!userExists) {
+    if (error) {
         return (
             <form>
                 <h2 className="brand-name">User Not Found</h2>
@@ -49,10 +54,21 @@ export default function Recommendations() {
         )
     }
 
-    // If a user is found, show the recommendations.
     return (
         <div className="recommendations-container">
-            <h2>Recommendations for {username}</h2>
+            <h2 style={{color: 'black'}}>Recommendations for {username}</h2>
+            <ul>
+                {anime
+                    .filter((item) => selectedStatuses.includes(item.list_status))
+                    .map((a, index) => ( 
+                        <li key={a.anime_id || index}> 
+                            <p>{a.title.romaji || a.title.english}</p> 
+                            <p>{JSON.stringify(a)}</p> 
+                            <img src={a.cover} alt={a.title.english || "Anime Cover"}></img> 
+                        </li> 
+                    ))
+                } 
+            </ul>
         </div>
     );
 }
