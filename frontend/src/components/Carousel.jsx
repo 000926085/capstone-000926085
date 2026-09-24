@@ -2,6 +2,7 @@ import React from 'react'
 import { useState, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react'
 import AutoScroll from 'embla-carousel-auto-scroll';
+import { DEFAULT_POSTERS } from '../constants/anime';
 import '../css/Carousel.css';
 
 /**
@@ -19,19 +20,32 @@ export default function Carousel() {
         const fetchPosters = async () => {
             try {
                 const res = await fetch(`http://localhost:8000/api/anime-carousel`);
-                if (res.ok) { 
-                    const data = await res.json();
 
-                    // Shuffle the returned anime and select the first 20 for display.
-                    const shuffled = [...data].sort(() => 0.5 - Math.random());
-                    setPosters(shuffled.slice(0, 20).map(item => ({
-                            cover: item.cover,
-                            anilist_id: item.anilist_id
-                        }))
-                    );
+                if (!res.ok) {
+                    setPosters(DEFAULT_POSTERS);
+                    return;
                 }
+
+                const data = await res.json();
+
+                // Shuffle the returned anime and select the first 20 for display.
+                const anime = [...data]
+                    .sort(() => 0.5 - Math.random())
+                    .slice(0, 20)
+                    .map(item => ({
+                        cover: item.cover,
+                        anilist_id: item.anilist_id
+                    }));
+
+                // If there aren't enough posters, fill in the rest with the default posters.
+                setPosters([
+                    ...anime,
+                    ...DEFAULT_POSTERS.slice(0, (20 - anime.length))
+                ]);
+
             } catch (err) {
                 console.error(err);
+                setPosters(DEFAULT_POSTERS);
             }
         }
         fetchPosters();

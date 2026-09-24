@@ -102,7 +102,6 @@ def import_anilist_user(username: str):
         # Retrieve fields from the data returned by the API.
         data = res_json["data"]
         avatar = data.get("User").get("avatar").get("large")
-        user_avg = data.get("User").get("statistics").get("anime").get("meanScore")
         list_data = data.get("MediaListCollection").get("lists")
 
         # Retrieve all anime from the user's list in preparation for storage.
@@ -193,40 +192,3 @@ def fetch_planning_data(username: str):
 
     anime_list = [item["anime"] for item in planning_res.data if item.get("anime")]
     return {"username": username, "planning_anime": anime_list}
-
-
-@app.get("/api/fetch-anime-list/{username}")
-def fetch_anime_list(username: str):
-    user_res = (
-        supabase.table("users")
-        .select("user_id", count="exact")
-         .eq("username", username)
-        .maybe_single()
-        .execute()
-    )
-
-    if not user_res or not user_res.data:
-        raise HTTPException(status_code=404, detail=f"User '{username}' not found.")
-    user_id = user_res.data["user_id"]
-
-    anime_list_res = (
-        supabase.table("users_anime")
-        .select("list_status, score, anime(*)")
-        .eq("user_id", user_id)
-        .execute()
-    )
-
-    anime_list = []
-    for item in anime_list_res.data or []:
-        anime_data = item.get("anime")
-
-        if anime_data:
-            # add the user-specific data from users_anime.
-            anime_data = {
-                **anime_data,
-                "score": item.get("score"),
-                "list_status": item.get("list_status")
-            }
-            anime_list.append(anime_data)
-
-    return {"username": username, "anime": anime_list}

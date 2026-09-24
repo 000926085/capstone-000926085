@@ -1,4 +1,5 @@
 from datetime import datetime, timezone
+from supabase_client import supabase
 
 def format_date(date):
     """
