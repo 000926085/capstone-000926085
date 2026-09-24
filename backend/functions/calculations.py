@@ -1,18 +1,18 @@
 import math
 
-def category_mean(animeList, category):
+def category_mean(anime_list, category):
     """
     Calculates the mean and frequency of a category item based on the user scores of anime associated with the item.
     
     args:
-        animeList: arr, contains all anime within a user's list.
+        anime_list: arr, contains all anime within a user's list.
         category: str, the field we are finding the means for.
     returns:
-        dict containing the mean and amount of times the item appeared within animeList.
+        dict containing the mean and amount of times the item appeared within anime_list.
     """
     scores = {}
 
-    for a in animeList:
+    for a in anime_list:
         score = a.get("user_score", 0)
         if score != 0:
 
@@ -23,7 +23,9 @@ def category_mean(animeList, category):
             if isinstance(data, dict) and "edges" in data:
                 for e in data.get("edges", []):
                     if e.get("isMain") and "node" in e:
-                        items.append(e.get("node").get("name"))
+                        node_name = e.get("node", {}).get("name")
+                        if node_name:
+                            items.append(node_name)
 
             # list, either genres or tags
             elif isinstance(data, list):
@@ -49,18 +51,24 @@ def category_mean(animeList, category):
         for name, vals in scores.items()
     }
 
-def affinity_score(category_dict, user_avg):
+def affinity_score(anime_list, category, user_avg, entity_key):
     """
     Calculates an affinity score for each item of a category based on a user's watch history.
     Liked items are boosted, disliked are lowered and new or average items remain neutral.
 
     args:
-        category_dict: dict, contains all items pertaining to a category.
+        anime_list: dict, parsed anime objects from user's watch history.
+        category: str, the category that we are finding affinity scores for.
         user_avg: float, a user's mean score across all rated anime within their list.
+        entity_key: str, singular JSON key name.
     returns:
-        dict containing the calculated affinity score and the resulting multiplier.
+        list containing the affinity data, formatted for database storage.
     """
-    affinities = {}
+    category_dict = category_mean(anime_list, category)
+    if not category_dict:
+        return {}
+
+    affinities = []
 
     # ensure that k is scaled based on the average volume of this category.
     counts = [stats.get("count") for stats in category_dict.values()]
@@ -75,11 +83,16 @@ def affinity_score(category_dict, user_avg):
         deviation = weighted_score - (user_avg - 2) # check against a reduced baseline.
         multiplier = round(max(0.5, min(1.5, 1.0 + (deviation / 100) * 3.0)), 3) # confine to a 0.5x to 1.5x range.
 
-        affinities[name] = {
-            "affinity": round(weighted_score, 2),
-            "mean": m,
-            "multiplier": multiplier,
-            "count": c
-        }
+        affinities.append(
+            {
+                entity_key: name,
+                "affinity": {
+                    "multiplier": multiplier,
+                    "score": round(weighted_score, 2),
+                    "mean": m,
+                    "count": c
+                }
+            }
+        )
 
     return affinities

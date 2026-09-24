@@ -30,6 +30,7 @@ query MyQuery ($username: String) {
                     studios {
                         edges {
                             node {
+                                id
                                 name
                             }
                             isMain

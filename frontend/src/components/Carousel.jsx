@@ -10,7 +10,7 @@ import '../css/Carousel.css';
  * @returns {JSX.Element} a carousel of anime posters sourced from the database.
  */
 export default function Carousel() {
-    let [posters, setPosters] = useState([]);
+    const [posters, setPosters] = useState([]);
     const [emblaRef] = useEmblaCarousel(
         { loop: true, align: 'center', watchDrag: false },
         [AutoScroll({ speed: 1, stopOnInteraction: false, stopOnMouseEnter: false })]

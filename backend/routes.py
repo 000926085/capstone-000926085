@@ -13,7 +13,6 @@ import queries as gql
 
 logger = logging.getLogger("app_logger")
 logger.setLevel(logging.ERROR)
-
 file_handler = RotatingFileHandler("error.log", maxBytes=5_000_000, backupCount=1)
 formatter = logging.Formatter(
     "%(asctime)s - %(name)s - %(levelname)s - %(message)s"
@@ -102,6 +101,7 @@ def import_anilist_user(username: str):
         # Retrieve fields from the data returned by the API.
         data = res_json["data"]
         avatar = data.get("User").get("avatar").get("large")
+        user_avg = data.get("User").get("statistics").get("anime").get("meanScore")
         list_data = data.get("MediaListCollection").get("lists")
 
         # Retrieve all anime from the user's list in preparation for storage.
@@ -120,6 +120,11 @@ def import_anilist_user(username: str):
             if entry.get("media", {}).get("status") != "NOT_YET_RELEASED"
         ]
 
+        # Find the affinity score a user has for each associated genre, tag and studio.
+        genre_affinities = calculations.affinity_score(all_anime, "genres", user_avg, "genre")
+        tag_affinities = calculations.affinity_score(all_anime, "tags", user_avg, "tag")
+        studio_affinities = calculations.affinity_score(all_anime, "studios", user_avg, "studio")
+
         try:
             # Postgres function for handling behaviour when provided with a user to setup.
             supabase.rpc(
@@ -127,7 +132,10 @@ def import_anilist_user(username: str):
                 {
                     "p_anime": all_anime,
                     "p_username": username,
-                    "p_avatar": avatar
+                    "p_avatar": avatar,
+                    "p_genres_affinity": genre_affinities,
+                    "p_tags_affinity": tag_affinities,
+                    "p_studios_affinity": studio_affinities,
                 }
             ).execute()
         except Exception as e:
