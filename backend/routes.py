@@ -89,12 +89,22 @@ def import_anilist_user(username: str):
                 "query": gql.IMPORT_USER,
                 "variables": {"username": username}
             })
-            response.raise_for_status()
         except requests.RequestException as e:
-            logger.error(f"AniList API error for user '{username}': {str(e)}")
+            logger.error(f"Network failure connecting to AniList for '{username}': {str(e)}")
             raise HTTPException(status_code=502, detail="Failed to communicate with AniList servers.")
 
+        # Handle AniList 404 (User Not Found)
+        if response.status_code == 404:
+            raise HTTPException(status_code=404, detail="An AniList account with this username does not exist.")
+
+        # Handle other non-200 responses (e.g. 500, 503 from AniList)
+        if response.status_code != 200:
+            logger.error(f"AniList returned status {response.status_code} for user '{username}': {response.text}")
+            raise HTTPException(status_code=502, detail="AniList servers returned an error.")
+
         res_json = response.json()
+
+        # Handle GraphQL field-level errors or missing User payload
         if "errors" in res_json or not res_json.get("data") or not res_json["data"].get("User"):
             raise HTTPException(status_code=404, detail="An AniList account with this username does not exist.")
 
