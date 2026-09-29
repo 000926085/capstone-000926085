@@ -178,9 +178,19 @@ def anime_carousel():
 
 @app.get("/api/fetch-planning-data/{username}")
 def fetch_planning_data(username: str):
+    """
+        Calls the Supabase database to fetch the anime within a user's list with the "Planning" or "Paused" status.
+
+        args:
+            username (str): the AniList username to import.
+        
+        returns:
+            last_updated (timestamp): indicates the last update to the user's profile data.
+            planning_anime (Object): contains data pertaining to an anime, as well as the user's relation to it.
+    """
     user_res = (
         supabase.table("users")
-        .select("user_id", count="exact")
+        .select("user_id, last_updated", count="exact")
         .eq("username", username)
         .maybe_single()
         .execute()
@@ -188,15 +198,24 @@ def fetch_planning_data(username: str):
 
     if not user_res or not user_res.data:
         raise HTTPException(status_code=404, detail=f"User '{username}' not found.")
-    user_id = user_res.data["user_id"]
+
+    data = user_res.data
+    user_id = data["user_id"]
 
     planning_res = (
         supabase.table("users_anime")
-        .select("anime(*)")
+        .select("list_status, anime(*)")
         .eq("user_id", user_id)
-        .eq("list_status", "PLANNING")
+        .in_("list_status", ["PLANNING", "PAUSED"])
         .execute()
     )
 
-    anime_list = [item["anime"] for item in planning_res.data if item.get("anime")]
-    return {"username": username, "planning_anime": anime_list}
+    anime_list = [{
+            **item["anime"],
+            "list_status": item["list_status"]
+        }
+        for item in planning_res.data
+        if item.get("anime")
+    ]
+
+    return {"last_updated": data["last_updated"], "planning_anime": anime_list}
