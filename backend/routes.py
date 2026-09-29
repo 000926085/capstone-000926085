@@ -204,18 +204,49 @@ def fetch_planning_data(username: str):
 
     planning_res = (
         supabase.table("users_anime")
-        .select("list_status, anime(*)")
+        .select("list_status, anime(*, anime_genres(genres(name)), anime_tags(similarity, tags(name)), anime_studios(studios(name)))")
         .eq("user_id", user_id)
         .in_("list_status", ["PLANNING", "PAUSED"])
         .execute()
     )
 
-    anime_list = [{
-            **item["anime"],
+    anime_list = []
+    for item in planning_res.data:
+        anime = item.get("anime")
+        if not anime:
+            continue
+
+        genres = [
+            relation["genres"]["name"]
+            for relation in anime.get("anime_genres", [])
+            if relation.get("genres")
+        ]
+
+        tags = [
+            {
+                "name": relation["tags"]["name"],
+                "similarity": relation["similarity"]
+            }
+            for relation in anime.get("anime_tags", [])
+            if relation.get("tags")
+        ]
+
+        studios = [
+            relation["studios"]["name"]
+            for relation in anime.get("anime_studios", [])
+            if relation.get("studios")
+        ]
+
+        anime.pop("anime_genres", None)
+        anime.pop("anime_tags", None)
+        anime.pop("anime_studios", None)
+
+        anime_list.append({
+            **anime,
+            "genres": genres,
+            "tags": tags,
+            "studios": studios,
             "list_status": item["list_status"]
-        }
-        for item in planning_res.data
-        if item.get("anime")
-    ]
+        })
 
     return {"last_updated": data["last_updated"], "planning_anime": anime_list}

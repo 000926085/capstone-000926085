@@ -91,22 +91,20 @@ export default function Recommendations() {
                 </label>
             ))}
 
-            <ul>
-                {anime
-                    .filter((item) => 
-                        selectedStatuses.some(
-                            (s) => s.status === item.list_status && s.checked
-                        )
-                    )   
-                    .map((a, index) => ( 
-                        <li key={a.anime_id || index}> 
-                            <p>{a.title.romaji || a.title.english}</p> 
-                            <p>{JSON.stringify(a)}</p> 
-                            <img src={a.cover} alt={a.title.english || "Anime Cover"}></img> 
-                        </li> 
-                    ))
-                } 
-            </ul>
+            {anime
+                .filter((item) => 
+                    selectedStatuses.some(
+                        (s) => s.status === item.list_status && s.checked
+                    )
+                )   
+                .map((a, index) => ( 
+                    <div className="anime_card" key={a.anime_id || index}> 
+                        <p>{a.title.romaji || a.title.english}</p> 
+                        {/* <p>{JSON.stringify(a)}</p> */}
+                        <img src={a.cover} alt={a.title.english || "Anime Cover"}></img> 
+                    </div> 
+                ))
+            } 
         </div>
     );
 }

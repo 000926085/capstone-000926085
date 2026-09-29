@@ -70,7 +70,7 @@ export default function SearchForm({onSuccess}) {
               {/* User input field. */}
               <label>
                 AniList Username
-                <input type="text" value={username} onChange={(e) => setUsername(e.target.value)} placeholder='...'/>
+                <input type="text" id="username_input" value={username} onChange={(e) => setUsername(e.target.value)} placeholder='...'/>
               </label>
 
               {/* Loading and error indicators. */}

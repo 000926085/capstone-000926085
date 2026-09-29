@@ -1,3 +1,8 @@
 .recommendations-container {
     color: black;
 }
+
+.anime_card {
+    border: 1.5px solid #ccc;
+    border-radius: 14px;
+}
