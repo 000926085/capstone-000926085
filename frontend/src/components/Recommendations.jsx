@@ -1,11 +1,14 @@
 import { useEffect, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
+import ReactPaginateModule from 'react-paginate';
+const ReactPaginate = ReactPaginateModule.default || ReactPaginateModule;
 import '../css/Recommendations.css'
 
 const LIST_STATUSES = [
     { status: "PLANNING", checked: true },
     { status: "PAUSED", checked: true }
-];
+]
+const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
 export default function Recommendations() {
     const { username } = useParams();
@@ -13,6 +16,9 @@ export default function Recommendations() {
     const [lastUpdated, setLastUpdated] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+
+    const [currentPage, setCurrentPage] = useState(0);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
 
     const [selectedStatuses, setSelectedStatuses] = useState(LIST_STATUSES);
     const handleOnChange = (status) => {
@@ -23,6 +29,18 @@ export default function Recommendations() {
                     : s
             )
         );
+        setCurrentPage(0);
+    };
+
+    const [search, setSearch] = useState("");
+    const handleSearchChange = (e) => {
+        setSearch(e.target.value);
+        setCurrentPage(0);
+    };
+
+    const handleItemsPerPageChange = (e) => {
+        setItemsPerPage(Number(e.target.value));
+        setCurrentPage(0);
     };
 
     useEffect(() => {
@@ -75,6 +93,25 @@ export default function Recommendations() {
         )
     }
 
+    const filteredAnime = (anime || []).filter((a) => {
+        const matchesStatus = selectedStatuses.some(
+            (s) => s.status === a.list_status && s.checked
+        );
+
+        const titleText = (a.title?.romaji || a.title?.english || "");
+        const query = search.toLowerCase().trim();
+        const matchesSearch = query === "" || titleText.toLowerCase().includes(query);
+
+        return matchesStatus && matchesSearch;
+    });
+
+    const pageCount = Math.ceil(filteredAnime.length / itemsPerPage);
+    const itemOffset = currentPage * itemsPerPage;
+    const currentItems = filteredAnime.slice(itemOffset, itemOffset + itemsPerPage);
+    const handlePageClick = (event) => {
+        setCurrentPage(event.selected);
+    };
+
     return (
         <div className="recommendations-container">
             <h2 style={{color: "black"}}>Recommendations for {username}</h2>
@@ -91,20 +128,72 @@ export default function Recommendations() {
                 </label>
             ))}
 
-            {anime
-                .filter((item) => 
-                    selectedStatuses.some(
-                        (s) => s.status === item.list_status && s.checked
-                    )
-                )   
-                .map((a, index) => ( 
-                    <div className="anime_card" key={a.anime_id || index}> 
-                        <p>{a.title.romaji || a.title.english}</p> 
-                        {/* <p>{JSON.stringify(a)}</p> */}
-                        <img src={a.cover} alt={a.title.english || "Anime Cover"}></img> 
-                    </div> 
-                ))
-            } 
+            <div style={{ margin: '15px 0' }}>
+                <span style={{ fontWeight: 'bold', marginRight: '10px' }}>Items Per Page:</span>
+                {PAGE_SIZE_OPTIONS.map((option) => (
+                    <label key={option} style={{ marginRight: '15px', cursor: 'pointer' }}>
+                        <input
+                            type="radio"
+                            name="itemsPerPage"
+                            value={option}
+                            checked={itemsPerPage === option}
+                            onChange={handleItemsPerPageChange}
+                        />
+                        {option}
+                    </label>
+                ))}
+            </div>
+
+            <div>
+                <label>
+                    Search for an Anime: 
+                    <input type="text" value={search} onChange={(e) => setSearch(e.target.value)} data-testid="title-search-input"/>
+                </label>
+            </div>
+
+            <div className="anime-list">
+                {currentItems.length > 0 ? (
+                    currentItems.map((a, index) => {
+                        const title = (a.title?.romaji || a.title?.english || "");
+
+                        return (
+                            <div className="anime_card" key={a.anime_id || index} data-testid="anime-card"> 
+                                <p data-testid="anime-card-title">{title}</p> 
+                                <p>List Status: {a.list_status}</p>
+                                <p>Anime Status: {a.status}</p>
+                                <p>Mean Score: {a.mean_score}</p>
+                                <p>Start Date: {a.start_date}</p>
+                                <img src={a.cover} alt={title} /> 
+                            </div> 
+                        );
+                    })
+                ) : (
+                    <p>No anime found matching your criteria.</p>
+                )}
+
+                {pageCount > 1 && (
+                    <ReactPaginate
+                        breakLabel="..."
+                        nextLabel="Next >"
+                        onPageChange={handlePageClick}
+                        pageRangeDisplayed={5}
+                        pageCount={pageCount}
+                        previousLabel="< Previous"
+                        renderOnZeroPageCount={null}
+                        forcePage={currentPage}
+                        containerClassName="pagination"
+                        activeClassName="active"
+                        pageClassName="page-item"
+                        pageLinkClassName="page-link"
+                        previousClassName="page-item"
+                        previousLinkClassName="page-link"
+                        nextClassName="page-item"
+                        nextLinkClassName="page-link"
+                        breakClassName="page-item"
+                        breakLinkClassName="page-link"
+                    />
+                )}
+            </div>
         </div>
     );
 }

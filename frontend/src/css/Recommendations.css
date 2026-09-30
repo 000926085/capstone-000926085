@@ -3,6 +3,31 @@
 }
 
 .anime_card {
-    border: 1.5px solid #ccc;
+    border: 1.5px solid #000000;
     border-radius: 14px;
+    margin: 8px;
+}
+
+.pagination {
+  display: flex;
+  list-style: none;
+  padding: 0;
+  gap: 8px;
+  justify-content: center;
+  margin-top: 20px;
+}
+
+.pagination .page-link {
+  padding: 8px 12px;
+  border: 1px solid #ccc;
+  border-radius: 4px;
+  cursor: pointer;
+  text-decoration: none;
+  color: #333;
+}
+
+.pagination .active .page-link {
+  background-color: #007bff;
+  color: white;
+  border-color: #007bff;
 }
