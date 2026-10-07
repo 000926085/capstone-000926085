@@ -1,11 +1,12 @@
 .recommendations-container {
-    color: black;
+  color: black;
 }
 
 .anime_card {
-    border: 1.5px solid #000000;
-    border-radius: 14px;
-    margin: 8px;
+  background-color: #ffffff;
+  border-radius: 12px;
+  box-shadow: 0 10px 25px rgba(0, 0, 0, 0.05);
+  box-sizing: border-box;
 }
 
 .pagination {

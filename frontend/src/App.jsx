@@ -1,9 +1,8 @@
 import { Routes, Route, useNavigate, useParams, useLocation } from 'react-router-dom'
-import { useState, useEffect } from 'react'
-import Navbar from "./components/Navbar"
-import SearchForm from './components/SearchForm'
-import Recommendations from './components/Recommendations'
-import Carousel from './components/Carousel'
+import Navbar from "./components/Navbar/Navbar"
+import SearchForm from './components/SearchForm/SearchForm'
+import Recommendations from './components/Recommendations/Recommendations'
+import Carousel from './components/Carousel/Carousel'
 import './App.css'
 
 function App() {

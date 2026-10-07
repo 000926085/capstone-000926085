@@ -1,8 +1,8 @@
 import { useNavigate } from 'react-router-dom'
-import logo from '../assets/logo.png'
-import home from '../assets/home.png'
-import login from '../assets/login.png'
-import "../css/Navbar.css"
+import logo from '../../assets/logo.png'
+import home from '../../assets/home.png'
+import login from '../../assets/login.png'
+import "./Navbar.modules.css"
 
 /**
  * Constructs a navbar that can be used to reach different endpoints of the website.

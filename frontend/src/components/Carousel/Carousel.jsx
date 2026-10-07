@@ -2,8 +2,9 @@ import React from 'react'
 import { useState, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react'
 import AutoScroll from 'embla-carousel-auto-scroll';
-import { DEFAULT_POSTERS } from '../constants/anime';
-import '../css/Carousel.css';
+import { DEFAULT_POSTERS } from '../../constants/anime';
+import { openAniListPage } from '../../utils/open_anilist_page';
+import './Carousel.modules.css';
 
 /**
  * Fetches anime posters from the database and constructs a carousel to display on the home page.
@@ -50,11 +51,6 @@ export default function Carousel() {
         }
         fetchPosters();
     }, []);
-
-    // Opens the AniList page of an anime when clicking on it's poster.
-    const openAniListPage = (id) => {
-        window.open(`https://anilist.co/anime/${id}`)
-    }
 
     return (
         <div className={`carousel-container ${posters.length !== 0 ? 'fade-in' : ''}`}>
