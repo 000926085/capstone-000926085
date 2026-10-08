@@ -133,6 +133,7 @@ def import_anilist_user(username: str):
         genre_affinities = calculations.affinity_score(all_anime, "genres", user_avg, "genre")
         tag_affinities = calculations.affinity_score(all_anime, "tags", user_avg, "tag")
         studio_affinities = calculations.affinity_score(all_anime, "studios", user_avg, "studio")
+        director_affinities = calculations.affinity_score(all_anime, "staff", user_avg, "director")
 
         try:
             # Postgres function for handling behaviour when provided with a user to setup.
@@ -145,6 +146,7 @@ def import_anilist_user(username: str):
                     "p_genres_affinity": genre_affinities,
                     "p_tags_affinity": tag_affinities,
                     "p_studios_affinity": studio_affinities,
+                    "p_directors_affinity": director_affinities,
                 }
             ).execute()
         except Exception as e:
@@ -198,6 +200,8 @@ def fetch_planning_data(username: str):
             last_updated (timestamp): indicates the last update to the user's profile data.
             planning_anime (Object): contains data pertaining to an anime, as well as the user's relation to it.
     """
+
+    # Fetch the user_id.
     user_res = (
         supabase.table("users")
         .select("user_id, last_updated", count="exact")
@@ -212,6 +216,8 @@ def fetch_planning_data(username: str):
     data = user_res.data
     user_id = data["user_id"]
 
+    # Fetch PLANNING or PAUSED anime within the user's list. 
+    # Also fetch genres, tags, studios, director and AniList's recommendations for each anime.
     planning_res = (
         supabase.table("users_anime")
         .select("""
@@ -221,6 +227,7 @@ def fetch_planning_data(username: str):
                 anime_genres(genres(name)),
                 anime_tags(similarity, tags(name)),
                 anime_studios(studios(name)),
+                anime_directors(directors(name)),
                 anilist_recommendations!anilist_recommendations_anime_id_fkey(
                     rank,
                     recommended_anime_id
@@ -232,13 +239,13 @@ def fetch_planning_data(username: str):
         .execute()
     )
 
+    # Fetch the user's entire anime list.
     user_anime_res = (
         supabase.table("users_anime")
         .select("anime_id, list_status, score, anime(popularity)")
         .eq("user_id", user_id)
         .execute()
     )
-
     user_anime = {
         item["anime_id"]: {
             "status": item["list_status"],
@@ -247,29 +254,79 @@ def fetch_planning_data(username: str):
         for item in user_anime_res.data
     }
 
-    max_popularity = max(
-        (
-            item["anime"]["popularity"]
-            for item in user_anime_res.data
-            if item.get("anime") and item["anime"].get("popularity") is not None
-        ),
-        default=1
+    # Find the most popular show in a user's list, used to normalize the popularity component of the base desirability score.
+    max_popularity = max((
+        item["anime"]["popularity"]
+        for item in user_anime_res.data
+        if item.get("anime") and item["anime"].get("popularity") is not None), default=1)
+
+    # Fetch the user's genre affinities.
+    genre_affinity_res = (
+        supabase.table("user_genres_affinity")
+        .select("genre_id, affinity, genres(name)")
+        .eq("user_id", user_id)
+        .execute()
     )
-    
+    genre_affinities = {
+        item["genres"]["name"]: item["affinity"]["multiplier"]
+        for item in genre_affinity_res.data
+        if item.get("genres") and item.get("affinity")
+    }
+
+    # Fetch the user's tag affinities.
+    tag_affinity_res = (
+        supabase.table("user_tags_affinity")
+        .select("tag_id, affinity, tags(name)")
+        .eq("user_id", user_id)
+        .execute()
+    )
+    tag_affinities = {
+        item["tags"]["name"]: item["affinity"]["multiplier"]
+        for item in tag_affinity_res.data
+        if item.get("tags") and item.get("affinity")
+    }
+
+    # Fetch the user's studio affinities.
+    studio_affinity_res = (
+        supabase.table("user_studios_affinity")
+        .select("studio_id, affinity, studios(name)")
+        .eq("user_id", user_id)
+        .execute()
+    )
+    studio_affinities = {
+        item["studios"]["name"]: item["affinity"]["multiplier"]
+        for item in studio_affinity_res.data
+        if item.get("studios") and item.get("affinity")
+    }
+
+    # Fetch the user's director affinities.
+    director_affinity_res = (
+        supabase.table("user_directors_affinity")
+        .select("director_id, affinity, directors(name)")
+        .eq("user_id", user_id)
+        .execute()
+    )
+    director_affinities = {
+        item["directors"]["name"]: item["affinity"]["multiplier"]
+        for item in director_affinity_res.data
+        if item.get("directors") and item.get("affinity")
+    }
+
+    # Build the list of anime.
     anime_list = []
     for item in planning_res.data:
         anime = item.get("anime")
         if not anime:
             continue
 
-        # extract genres
+        # Extract genres
         genres = [
             relation["genres"]["name"]
             for relation in anime.get("anime_genres", [])
             if relation.get("genres")
         ]
 
-        # extract tags
+        # Extract tags
         tags = [
             {
                 "name": relation["tags"]["name"],
@@ -279,14 +336,21 @@ def fetch_planning_data(username: str):
             if relation.get("tags")
         ]
 
-        # extract studios
+        # Extract studios
         studios = [
             relation["studios"]["name"]
             for relation in anime.get("anime_studios", [])
             if relation.get("studios")
         ]
 
-        # extract data pertaining to recommendations on the AniList page of an anime.
+        # Extract directors
+        directors = [
+            relation["directors"]["name"]
+            for relation in anime.get("anime_directors", [])
+            if relation.get("directors")
+        ]
+
+        # Extract data pertaining to recommendations on the AniList page of an anime.
         anilist_recommendations = []
         for rec in anime.get("anilist_recommendations", []):
             watched = user_anime.get(rec["recommended_anime_id"])
@@ -297,11 +361,14 @@ def fetch_planning_data(username: str):
                 "status": watched["status"] if watched else None
         })
 
+        # Remove the raw relationship data from the anime object.
         anime.pop("anime_genres", None)
         anime.pop("anime_tags", None)
         anime.pop("anime_studios", None)
+        anime.pop("anime_directors", None)
         anime.pop("anilist_recommendations", None)
 
+        # Build the response object and calculate its final desirability.
         anime_list.append({
             **anime,
             "genres": genres,
@@ -309,7 +376,19 @@ def fetch_planning_data(username: str):
             "studios": studios,
             "list_status": item["list_status"],
             "anilist_recs": anilist_recommendations, 
-            "desirability": calculations.calculate_desirability(anime, max_popularity, anilist_recommendations)
+            "desirability": calculations.calculate_desirability(
+                anime,
+                max_popularity,
+                anilist_recommendations,
+                genres,
+                tags,
+                studios,
+                directors,
+                genre_affinities,
+                tag_affinities,
+                studio_affinities,
+                director_affinities
+            )
         })
 
     return {"last_updated": data["last_updated"], "planning_anime": anime_list}

@@ -2,8 +2,9 @@ import math
 
 def category_mean(anime_list, category):
     """
-    Calculates the mean and frequency of a category item based on the user scores of anime associated with the item.
-    
+    Calculates the mean and frequency of a category item based on the user scores
+    of anime associated with the item.
+
     args:
         anime_list: arr, contains all anime within a user's list.
         category: str, the field we are finding the means for.
@@ -14,23 +15,44 @@ def category_mean(anime_list, category):
 
     for a in anime_list:
         score = a.get("user_score", 0)
-        if score != 0:
 
+        if score != 0:
             data = a.get(category, [])
             items = []
 
-            # dict, studios
+            # Dict, studios or staff
             if isinstance(data, dict) and "edges" in data:
                 for e in data.get("edges", []):
-                    if e.get("isMain") and "node" in e:
-                        node_name = e.get("node", {}).get("name")
-                        if node_name:
-                            items.append(node_name)
+                    if "node" not in e:
+                        continue
 
-            # list, either genres or tags
+                    # Staff contains multiple roles, so only include directors.
+                    if category == "staff":
+                        if e.get("role") != "Director":
+                            continue
+
+                        name_data = e.get("node", {}).get("name", {})
+                        node_name = " ".join(
+                            part for part in [
+                                name_data.get("first"),
+                                name_data.get("last")
+                            ]
+                            if part
+                        )
+
+                    # Studios only include the main studio.
+                    elif category == "studios":
+                        if not e.get("isMain"):
+                            continue
+
+                        node_name = e.get("node", {}).get("name")
+
+                    if node_name:
+                        items.append(node_name)
+
+            # List, either genres or tags
             elif isinstance(data, list):
                 for i in data:
-                    # handle distinction between genres and tags
                     if isinstance(i, dict):
                         if not i.get("isAdult"):
                             items.append(i.get("name"))
@@ -38,9 +60,9 @@ def category_mean(anime_list, category):
                         items.append(i)
 
             for name in items:
-                # initialize object if a new key is encountered
                 if name not in scores:
                     scores[name] = []
+
                 scores[name].append(score)
 
     return {
@@ -70,7 +92,7 @@ def affinity_score(anime_list, category, user_avg, entity_key):
 
     affinities = []
 
-    # ensure that k is scaled based on the average volume of this category.
+    # Ensure that k is scaled based on the average volume of this category.
     counts = [stats.get("count") for stats in category_dict.values()]
     avg_count = sum(counts) / len(counts) if counts else 1  
     k = max(2, avg_count * 0.25)
@@ -78,20 +100,19 @@ def affinity_score(anime_list, category, user_avg, entity_key):
     for name, stats in category_dict.items():
         m, c = stats.get("mean"), stats.get("count")
 
-        # as frequency increases, so does our trust.
+        # As frequency increases, so does our trust.
         trust = c / (c + k) 
         weighted_score = (
             (m * 10) * trust
             + (user_avg - 2) * (1 - trust)
         )
 
-        # check against a reduced baseline.
+        # Check against a reduced baseline.
         deviation = weighted_score - (user_avg - 2) 
 
-        # confine to a 0.5x to 1.5x range.
+        # Confine to a 0.5x to 1.5x range.
         multiplier = round(
-            max(0.5, min(1.5, 1.0 + (deviation / 100) * 3.0)),
-            3
+            max(0.5, min(1.5, 1.0 + (deviation / 100) * 3.0)), 3
         )
 
         affinities.append(
@@ -142,8 +163,71 @@ def recommendation_bonus(recommendations):
 
     return points
 
+def calculate_category_affinity(items, affinities, use_similarity=False):
+    """
+    Determines the multiplier for the total score using the affinity value of a category.
 
-def calculate_desirability(anime, max_popularity, anilist_recommendations):
+    args:
+        items (list): the items that belong to a given category, associated with a given anime.
+        affinities (dict): affinity values for a given category.
+        use_similarity (boolean): flag for determining if we're calculating on tags or not.
+    returns:
+        float representing a multiplier for a category.
+    """
+    if not items: return 1.0
+
+    # Use the existing affinities to establish a basline for unknown genres.
+    known_affinities = list(affinities.values())
+    fallback = (
+        sum(known_affinities) / len(known_affinities)
+        if known_affinities else 1.0
+    )
+
+    weighted_affinities = []
+    for item in items:
+        # Genres and studios are simple strings. 
+        if isinstance(item, str): 
+            name, similarity = item, 100
+
+        # Tags contain a name and similarity value.
+        else:
+            name, similarity = item["name"], item.get("similarity") or 0
+
+        # Look up the user's affinity for this item. 
+        affinity = affinities.get(name, fallback)
+
+        # For tags, consider how strongly AniList associates a tag with this anime.
+        if use_similarity:
+            similarity_weight = similarity / 100 
+            weighted_affinity = ( 
+                1.0 + (affinity - 1.0) * similarity_weight 
+            )
+        else:
+            weighted_affinity = affinity
+
+        weighted_affinities.append(weighted_affinity)
+
+    # Calculate the average affinity across all items.
+    average_affinity = sum(weighted_affinities) / len(weighted_affinities)
+
+    # Reward multiple, strong matches with diminishing returns.
+    bonus = 1 + 0.05 * math.log(len(weighted_affinities))
+    
+    return average_affinity * bonus
+
+def calculate_desirability(
+    anime, 
+    max_popularity, 
+    anilist_recommendations,
+    genres,
+    tags,
+    studios,
+    directors,
+    genre_affinities,
+    tag_affinities,
+    studio_affinities,
+    director_affinities
+):
     mean_score = anime.get("mean_score") or 0
     popularity = anime.get("popularity") or 1
     
@@ -157,12 +241,42 @@ def calculate_desirability(anime, max_popularity, anilist_recommendations):
     ))
 
     # Has the user enjoyed other anime found to be similar to this one? 
-    recommendation_bonus_points = recommendation_bonus(anilist_recommendations)
+    recommendation_bonus_points = recommendation_bonus(anilist_recommendations) 
 
-    total_score = base_score + recommendation_bonus_points
+    # How do this anime's genres match with the user's preferences?
+    genre_multiplier = calculate_category_affinity(genres, genre_affinities)
+
+    # How do this anime's studios match with the user's preferences?
+    studio_multiplier = calculate_category_affinity(studios, studio_affinities)
+
+    # How do this anime's tags match with the user's preferences?
+    tag_multiplier = calculate_category_affinity(tags, tag_affinities, True)
+
+    # How do this anime's directors match with the user's preferences?
+    director_multiplier = calculate_category_affinity(directors, director_affinities)
+
+    # Combine the affinity signals, according to their hierarchy.
+    affinity_multiplier = (
+        1.0
+        + 0.40 * (genre_multiplier - 1.0)
+        + 0.30 * (tag_multiplier - 1.0)
+        + 0.15 * (studio_multiplier - 1.0)
+        + 0.15 * (director_multiplier - 1.0)
+    )
+
+    # Calculate the final score used to sort the anime on the frontend.
+    total_score = (
+        (base_score * affinity_multiplier)
+        + (recommendation_bonus_points * 0.75)
+    )
 
     return {
         "base_score": round(base_score, 4),
         "recommendation_bonus": round(recommendation_bonus_points, 4),
+        "genre_multiplier": round(genre_multiplier, 4),
+        "tag_multiplier": round(tag_multiplier, 4),
+        "studio_multiplier": round(studio_multiplier, 4),
+        "affinity_multiplier": round(affinity_multiplier, 4),
+        "director_multiplier": round(director_multiplier, 4),
         "total_score": round(total_score, 2)
     }

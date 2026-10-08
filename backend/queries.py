@@ -57,6 +57,18 @@ query MyQuery ($username: String) {
                     coverImage {
                         large
                     }
+                    staff(sort: RELEVANCE, page: 1, perPage: 100) {
+                        edges {
+                            role
+                            node {
+                                id
+                                name {
+                                    first
+                                    last
+                                }
+                            }
+                        }
+                    }
                     recommendations (sort: RATING_DESC, page: 1, perPage: 5) {
                         nodes {
                             mediaRecommendation {
