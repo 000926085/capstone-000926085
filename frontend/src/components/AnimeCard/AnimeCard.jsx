@@ -43,10 +43,10 @@ export default function AnimeCard({anime = {}, rec_length}) {
                 {/* Header, title, points from algorithm and rank compared to other anime. */}
                 <div className="card-header">
                     <div className="rank-container">
-                        <span className="rank-badge">#000</span>
+                        <span className="rank-badge">#{anime.rank}</span>
                         <span className="total-count">of {rec_length}</span>
                     </div>
-                    <span className="points-badge">? pts</span>
+                    <span className="points-badge">{anime.desirability?.total_score} pts</span>
                 </div>
 
                 <h3 className="anime-title" data-testid="anime-card-title">

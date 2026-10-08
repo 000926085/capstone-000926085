@@ -57,6 +57,13 @@ query MyQuery ($username: String) {
                     coverImage {
                         large
                     }
+                    recommendations (sort: RATING_DESC, page: 1, perPage: 5) {
+                        nodes {
+                            mediaRecommendation {
+                                id
+                            }
+                        }
+                    }
                 }
                 status
                 score

@@ -1,6 +1,5 @@
 import logging
 from logging.handlers import RotatingFileHandler
-import trace
 import traceback
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
@@ -179,7 +178,8 @@ def anime_carousel():
     supabase_query = (
         supabase.table("anime")
         .select("*", count="exact")
-        .order("popularity", desc=True) 
+        .order("popularity", desc=True)
+        .neq("cover", None) 
         .limit(100)
         .execute()
     )
@@ -214,24 +214,62 @@ def fetch_planning_data(username: str):
 
     planning_res = (
         supabase.table("users_anime")
-        .select("list_status, anime(*, anime_genres(genres(name)), anime_tags(similarity, tags(name)), anime_studios(studios(name)))")
+        .select("""
+            list_status,
+            anime(
+                *,
+                anime_genres(genres(name)),
+                anime_tags(similarity, tags(name)),
+                anime_studios(studios(name)),
+                anilist_recommendations!anilist_recommendations_anime_id_fkey(
+                    rank,
+                    recommended_anime_id
+                )
+            )
+        """)
         .eq("user_id", user_id)
         .in_("list_status", ["PLANNING", "PAUSED"])
         .execute()
     )
 
+    user_anime_res = (
+        supabase.table("users_anime")
+        .select("anime_id, list_status, score, anime(popularity)")
+        .eq("user_id", user_id)
+        .execute()
+    )
+
+    user_anime = {
+        item["anime_id"]: {
+            "status": item["list_status"],
+            "score": item["score"]
+        }
+        for item in user_anime_res.data
+    }
+
+    max_popularity = max(
+        (
+            item["anime"]["popularity"]
+            for item in user_anime_res.data
+            if item.get("anime") and item["anime"].get("popularity") is not None
+        ),
+        default=1
+    )
+    
     anime_list = []
     for item in planning_res.data:
         anime = item.get("anime")
         if not anime:
             continue
 
+        # extract genres
         genres = [
             relation["genres"]["name"]
             for relation in anime.get("anime_genres", [])
             if relation.get("genres")
         ]
 
+        # extract tags
         tags = [
             {
                 "name": relation["tags"]["name"],
@@ -241,22 +279,37 @@ def fetch_planning_data(username: str):
             if relation.get("tags")
         ]
 
+        # extract studios
         studios = [
             relation["studios"]["name"]
             for relation in anime.get("anime_studios", [])
             if relation.get("studios")
         ]
 
+        # extract data pertaining to recommendations on the AniList page of an anime.
+        anilist_recommendations = []
+        for rec in anime.get("anilist_recommendations", []):
+            watched = user_anime.get(rec["recommended_anime_id"])
+        
+            anilist_recommendations.append({
+                "rank": rec["rank"],
+                "score": watched["score"] if watched else None,
+                "status": watched["status"] if watched else None
+        })
+
         anime.pop("anime_genres", None)
         anime.pop("anime_tags", None)
         anime.pop("anime_studios", None)
+        anime.pop("anilist_recommendations", None)
 
         anime_list.append({
             **anime,
             "genres": genres,
             "tags": tags,
             "studios": studios,
-            "list_status": item["list_status"]
+            "list_status": item["list_status"],
+            "anilist_recs": anilist_recommendations, 
+            "desirability": calculations.calculate_desirability(anime, max_popularity, anilist_recommendations)
         })
 
     return {"last_updated": data["last_updated"], "planning_anime": anime_list}

@@ -42,5 +42,10 @@ export function useRecommendations(username) {
         return () => { mounted = false; };
     }, [username]);
 
-    return { anime, lastUpdated, loading, error };
+    // Sort based on the calculated points, before giving them a rank.
+    const rankedAnime = [...anime]
+        .sort((a, b) => b.desirability.total_score - a.desirability.total_score)
+        .map((anime, index) => ({ ...anime, rank: index + 1 }));
+
+    return { anime: rankedAnime, lastUpdated, loading, error };
 }

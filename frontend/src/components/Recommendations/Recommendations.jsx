@@ -80,6 +80,8 @@ export default function Recommendations() {
         )
     }
 
+    console.log(anime);
+
     return (
         <div className="recommendations-container">
             <h2 style={{color: "black"}}>Recommendations for {username}</h2>
