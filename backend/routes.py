@@ -79,6 +79,13 @@ def import_anilist_user(username: str):
         .execute()
     )
 
+    user_res = (
+        supabase.table("user_directors_affinity")
+        .select("*")
+        .eq("user_id", 1)
+        .execute()
+    )
+
     # Call the api to fetch data if provided with a new or out-of-date (24 hrs) user.
     if supabase_query.count == 0 or helpers.hour_difference(supabase_query.data[0]["last_updated"]) >= 24:
         url = "https://graphql.anilist.co"

@@ -1,0 +1,131 @@
+.filter-bar {
+    display: flex;
+    flex-direction: column;
+    gap: 12px;
+    padding: 16px;
+    margin: 12px auto 16px auto; 
+    max-width: 650px;         
+    background-color: #ffffff;
+    border: 1px solid #e2e8f0;
+    border-radius: 12px;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.04); 
+    color: #334155;
+    font-size: 14px;
+    box-sizing: border-box;
+}
+
+.filter-group {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 6px;
+}
+
+.filter-title {
+    color: #64748b;
+    font-size: 13px;
+    margin-right: 4px;
+    font-weight: 500;
+}
+
+.filter-checkbox-label,
+.filter-radio-label {
+    display: inline-flex;
+    align-items: center;
+    gap: 6px;
+    padding: 4px 10px;
+    background-color: #f1f5f9;
+    border: 1px solid transparent;
+    border-radius: 360px; 
+    font-size: 0.75rem; 
+    font-weight: 500;
+    color: #475569;
+    cursor: pointer;
+    transition:
+        background-color 0.2s ease,
+        border-color 0.2s ease,
+        color 0.2s ease;
+}
+
+.filter-checkbox-label:hover,
+.filter-radio-label:hover {
+    background-color: #e0f2fe;
+    border-color: #bfdbfe;
+    color: #0284c7;
+}
+
+.filter-checkbox-label:has(input:checked),
+.filter-radio-label:has(input:checked) {
+    background-color: #e0f2fe;
+    border-color: #bae6fd;
+    color: #0284c7;
+    font-weight: 600;
+}
+
+.filter-checkbox-label input,
+.filter-radio-label input {
+    margin: 0;
+    accent-color: #3b82f6;
+    cursor: pointer;
+}
+
+.filter-group > label:has(input[type="text"]) {
+    display: flex;
+    align-items: center;
+    flex-wrap: wrap;
+    gap: 8px;
+    color: #64748b;
+    font-size: 13px;
+}
+
+.filter-bar input[type="text"] {
+    flex: 1;
+    min-width: 180px;
+    padding: 7px 12px;
+    background-color: #f8fafc;
+    border: 1px solid #dbeafe;
+    border-radius: 8px; 
+    outline: none;
+    color: #334155;
+    font: inherit;
+    font-size: 0.825rem;
+    transition:
+        border-color 0.2s ease,
+        box-shadow 0.2s ease,
+        background-color 0.2s ease;
+}
+
+.filter-bar input[type="text"]::placeholder {
+    color: #94a3b8;
+}
+
+.filter-bar input[type="text"]:focus {
+    background-color: #ffffff;
+    border-color: #3b82f6;
+    box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.filter-bar input:focus-visible {
+    outline: 2px solid #3b82f6;
+    outline-offset: 2px;
+}
+
+@media (max-width: 480px) {
+    .filter-bar {
+        padding: 12px;
+        margin: 8px;
+        max-width: 100%;
+    }
+
+    .filter-group > label:has(input[type="text"]) {
+        align-items: flex-start;
+        flex-direction: column;
+        gap: 6px;
+        width: 100%;
+    }
+
+    .filter-bar input[type="text"] {
+        box-sizing: border-box;
+        width: 100%;
+    }
+}

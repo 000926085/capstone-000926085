@@ -1,3 +1,5 @@
+import "./FilterBar.modules.css";
+
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
 /**
@@ -46,7 +48,7 @@ export default function FilterBar({selectedStatuses, onStatusChange, search, onS
 
             {/* Search Input */}
             <div className="filter-group">
-                <label>
+                <label className="filter-title">
                     Search for an Anime: 
                     <input 
                         type="text" 

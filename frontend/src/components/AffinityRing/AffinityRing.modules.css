@@ -1,0 +1,62 @@
+.affinity-ring {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    gap: 6px;
+    min-width: 0;
+    text-align: center;
+}
+
+.affinity-ring__visual {
+    position: relative;
+    flex-shrink: 0;
+}
+
+.affinity-ring__svg {
+    display: block;
+    overflow: visible;
+}
+
+.affinity-ring__track {
+    stroke: #343434;
+}
+
+.affinity-ring__progress {
+    transition: stroke-dashoffset 350ms ease;
+}
+
+.affinity-ring__value {
+    fill: currentColor;
+    font-size: 21px;
+    font-weight: 700;
+    font-variant-numeric: tabular-nums;
+}
+
+.affinity-ring__label {
+    font-size: 0.95rem;
+    font-weight: 600;
+}
+
+.affinity-ring__points {
+    font-size: 0.85rem;
+    font-weight: 600;
+    font-variant-numeric: tabular-nums;
+}
+
+.affinity-ring__points--positive {
+    color: #39d98a;
+}
+
+.affinity-ring__points--negative {
+    color: #ff6248;
+}
+
+.affinity-ring__points--neutral {
+    color: #a0a0a0;
+}
+
+@media (prefers-reduced-motion: reduce) {
+    .affinity-ring__progress {
+        transition: none;
+    }
+}

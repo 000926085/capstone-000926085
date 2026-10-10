@@ -243,19 +243,14 @@ def calculate_desirability(
     # Has the user enjoyed other anime found to be similar to this one? 
     recommendation_bonus_points = recommendation_bonus(anilist_recommendations) 
 
-    # How do this anime's genres match with the user's preferences?
+    # How do the categories of this anime match the user's preferences?
     genre_multiplier = calculate_category_affinity(genres, genre_affinities)
-
-    # How do this anime's studios match with the user's preferences?
     studio_multiplier = calculate_category_affinity(studios, studio_affinities)
-
-    # How do this anime's tags match with the user's preferences?
     tag_multiplier = calculate_category_affinity(tags, tag_affinities, True)
-
-    # How do this anime's directors match with the user's preferences?
     director_multiplier = calculate_category_affinity(directors, director_affinities)
 
     # Combine the affinity signals, according to their hierarchy.
+    # Genres 40%, tags 30%, genres and studios 15%.
     affinity_multiplier = (
         1.0
         + 0.40 * (genre_multiplier - 1.0)
@@ -270,6 +265,12 @@ def calculate_desirability(
         + (recommendation_bonus_points * 0.75)
     )
 
+    # Calculate individual point contributions
+    genre_points = base_score * 0.40 * (genre_multiplier - 1.0)
+    tag_points = base_score * 0.30 * (tag_multiplier - 1.0)
+    studio_points = base_score * 0.15 * (studio_multiplier - 1.0)
+    director_points = base_score * 0.15 * (director_multiplier - 1.0)
+
     return {
         "base_score": round(base_score, 4),
         "recommendation_bonus": round(recommendation_bonus_points, 4),
@@ -278,5 +279,11 @@ def calculate_desirability(
         "studio_multiplier": round(studio_multiplier, 4),
         "affinity_multiplier": round(affinity_multiplier, 4),
         "director_multiplier": round(director_multiplier, 4),
+        "point_contributions": {
+            "genres": genre_points,
+            "tags": tag_points,
+            "studios": studio_points,
+            "directors": director_points
+        },
         "total_score": round(total_score, 2)
     }

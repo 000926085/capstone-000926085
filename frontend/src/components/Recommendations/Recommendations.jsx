@@ -10,7 +10,7 @@ import { useRecommendations } from '../../hooks/useRecommendations';
 import { filterAnime } from '../../utils/filterAnime';
 
 import './Recommendations.modules.css'
-import FilterBar from '../FilterBar';
+import FilterBar from '../FilterBar/FilterBar';
 
 const LIST_STATUSES = [
     { status: "PLANNING", checked: true },
@@ -79,8 +79,6 @@ export default function Recommendations() {
             </form>
         )
     }
-
-    console.log(anime);
 
     return (
         <div className="recommendations-container">
