@@ -10,7 +10,11 @@ import './Carousel.modules.css';
  * Fetches anime posters from the database and constructs a carousel to display on the home page.
  * @returns {JSX.Element} a carousel of anime posters sourced from the database.
  */
-export default function Carousel() {
+export default function Carousel({ onLoad }) {
+    useEffect(() => {
+        if (onLoad) { onLoad(); }
+    }, [onLoad]);
+
     const [posters, setPosters] = useState([]);
     const [emblaRef] = useEmblaCarousel(
         { loop: true, align: 'center', watchDrag: false },

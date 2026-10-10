@@ -12,6 +12,7 @@
   align-items: center;
   gap: 8px;
   color: white;
+  cursor: pointer;
 }
 
 .text-group {

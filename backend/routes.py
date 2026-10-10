@@ -1,15 +1,20 @@
 import logging
-from logging.handlers import RotatingFileHandler
+import json
 import traceback
+import requests
+import asyncio
+
+from logging.handlers import RotatingFileHandler
 from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.responses import JSONResponse
+from fastapi.responses import JSONResponse, StreamingResponse
 from supabase_client import supabase
-import requests
+
 import functions.helpers as helpers
 import functions.calculations as calculations
 import queries as gql
 
+# Logging setup.
 logger = logging.getLogger("app_logger")
 logger.setLevel(logging.ERROR)
 file_handler = RotatingFileHandler("error.log", maxBytes=5_000_000, backupCount=1)
@@ -19,6 +24,7 @@ formatter = logging.Formatter(
 file_handler.setFormatter(formatter)
 logger.addHandler(file_handler)
 
+# FastAPI setup.
 app = FastAPI()
 app.add_middleware(
     CORSMiddleware,
@@ -57,92 +63,97 @@ def test_error():
 
 @app.post("/api/import-anilist-user/{username}")
 def import_anilist_user(username: str):
-    """
-    Checks the Supabase database to verify if a user exists and that their data has been updated within the past 24 hours.
-    If the user is missing or has stale data, query the AniList API, parse the list data and run the 'user_setup' database function. 
-
-    args:
-        username (str): the AniList username to import.
-    
-    returns:
-        dict: a status message indicating whether the user was imported or already up to date.
-
-    raises:
-        502: If the AniList GraphQL query fails.
-        404: If the AniList account does not exist.
-    """
-    # Construct a supabase query to first check the database for a user.
-    supabase_query = (
-        supabase.table("users")
-        .select("*", count="exact")
-        .eq("username", username)
-        .execute()
-    )
-
-    user_res = (
-        supabase.table("user_directors_affinity")
-        .select("*")
-        .eq("user_id", 1)
-        .execute()
-    )
-
-    # Call the api to fetch data if provided with a new or out-of-date (24 hrs) user.
-    if supabase_query.count == 0 or helpers.hour_difference(supabase_query.data[0]["last_updated"]) >= 24:
-        url = "https://graphql.anilist.co"
-
+    async def generate_progress():
         try:
+            yield json.dumps({"step": "supabase_check", "message": "Checking database for username..."}) + "\n"
+            await asyncio.sleep(0.1)
+
+            # Construct a supabase query to first check the database for a user.
+            supabase_query = (
+                supabase.table("users")
+                .select("*", count="exact")
+                .eq("username", username)
+                .execute()
+            )
+
+            # Check if the user doesn't exist or has stale data.
+            stale = (
+                supabase_query.count == 0
+                or helpers.hour_difference(supabase_query.data[0]["last_updated"]) >= 24
+            )
+
+            if not stale:
+               yield json.dumps({"step": "complete", "message": f"User {username} is up to date."}) + "\n"
+               return
+
+            # Make a POST request to the AniList API for fresh list data.
+            yield json.dumps({"step": "anilist_fetch", "message": "Fetching anime lists from AniList..."}) + "\n"
+            url = "https://graphql.anilist.co"
             response = requests.post(url, json={
                 "query": gql.IMPORT_USER,
                 "variables": {"username": username}
             })
-        except requests.RequestException as e:
-            logger.error(f"Network failure connecting to AniList for '{username}': {str(e)}")
-            raise HTTPException(status_code=502, detail="Failed to communicate with AniList servers.")
 
-        # Handle AniList 404 (User Not Found)
-        if response.status_code == 404:
-            raise HTTPException(status_code=404, detail="An AniList account with this username does not exist.")
+            if response.status_code == 404:
+                yield json.dumps({"error": "An AniList account with this username does not exist.", "status_code": 404}) + "\n"
+                return
+            if response.status_code != 200:
+                yield json.dumps({"error": "AniList servers returned an error.", "status_code": 502}) + "\n"
+                return
 
-        # Handle other non-200 responses (e.g. 500, 503 from AniList)
-        if response.status_code != 200:
-            logger.error(f"AniList returned status {response.status_code} for user '{username}': {response.text}")
-            raise HTTPException(status_code=502, detail="AniList servers returned an error.")
+            res_json = response.json()
+            if "errors" in res_json or not res_json.get("data") or not res_json["data"].get("User"):
+                yield json.dumps({"error": "An AniList account with this username does not exist.", "status_code": 404}) + "\n"
+                return
 
-        res_json = response.json()
+            # Retrieve fields from the data returned by the API.
+            yield json.dumps({"step": "parsing", "message": "Parsing anime entries..."}) + "\n"
+            data = res_json["data"]
+            avatar = data.get("User").get("avatar").get("large")
+            user_avg = data.get("User").get("statistics").get("anime").get("meanScore")
+            list_data = data.get("MediaListCollection").get("lists")
 
-        # Handle GraphQL field-level errors or missing User payload
-        if "errors" in res_json or not res_json.get("data") or not res_json["data"].get("User"):
-            raise HTTPException(status_code=404, detail="An AniList account with this username does not exist.")
+            # Retrieve all anime from the user's list in preparation for storage.
+            raw_anime = [
+                {
+                    **entry["media"],
+                    "user_score": entry.get("score", 0),
+                    "user_status": entry.get("status"),
+                    "anilist_id": entry["media"].get("id"),
+                    "startDate": helpers.format_date(entry["media"].get("startDate")),
+                    "endDate": helpers.format_date(entry["media"].get("endDate")),
+                    "cover": entry["media"].get("coverImage", {}).get("large")
+                }
+                for c in list_data if not c.get("isCustomList")
+                for entry in c.get("entries", [])
+                if entry.get("media", {}).get("status") != "NOT_YET_RELEASED"
+            ]
 
-        # Retrieve fields from the data returned by the API.
-        data = res_json["data"]
-        avatar = data.get("User").get("avatar").get("large")
-        user_avg = data.get("User").get("statistics").get("anime").get("meanScore")
-        list_data = data.get("MediaListCollection").get("lists")
+            seen_ids = set()
+            all_anime = []
+            for anime in raw_anime:
+                aid = anime.get("anilist_id")
+                if aid not in seen_ids:
+                    seen_ids.add(aid)
+                    all_anime.append(anime)
 
-        # Retrieve all anime from the user's list in preparation for storage.
-        all_anime = [
-            {
-                **entry["media"],
-                "user_score": entry.get("score", 0),
-                "user_status": entry.get("status"),
-                "anilist_id": entry["media"].get("id"),
-                "startDate": helpers.format_date(entry["media"].get("startDate")),
-                "endDate": helpers.format_date(entry["media"].get("endDate")),
-                "cover": entry["media"].get("coverImage", {}).get("large")
-            }
-            for c in list_data if not c.get("isCustomList")
-            for entry in c.get("entries", [])
-            if entry.get("media", {}).get("status") != "NOT_YET_RELEASED"
-        ]
+            # Check if the user has at least one valid show within their planning list.
+            valid_planning_anime = [
+                entry for c in list_data if not c.get("isCustomList")
+                for entry in c.get("entries", [])
+                if entry.get("status") == "PLANNING" 
+                and entry.get("media", {}).get("status") != "NOT_YET_RELEASED"
+            ]
+            if not valid_planning_anime: 
+                yield json.dumps({"error": "This AniList account has no valid anime within their planning list.", "status_code": 400 }) + "\n"
 
-        # Find the affinity score a user has for each associated genre, tag and studio.
-        genre_affinities = calculations.affinity_score(all_anime, "genres", user_avg, "genre")
-        tag_affinities = calculations.affinity_score(all_anime, "tags", user_avg, "tag")
-        studio_affinities = calculations.affinity_score(all_anime, "studios", user_avg, "studio")
-        director_affinities = calculations.affinity_score(all_anime, "staff", user_avg, "director")
+            yield json.dumps({"step": "calculating", "message": "Calculating category affinities..."}) + "\n"
+            genre_affinities = calculations.affinity_score(all_anime, "genres", user_avg, "genre")
+            tag_affinities = calculations.affinity_score(all_anime, "tags", user_avg, "tag")
+            studio_affinities = calculations.affinity_score(all_anime, "studios", user_avg, "studio")
+            director_affinities = calculations.affinity_score(all_anime, "staff", user_avg, "director")
 
-        try:
+            yield json.dumps({"step": "saving", "message": "Saving data to Supabase..."}) + "\n"
             # Postgres function for handling behaviour when provided with a user to setup.
             supabase.rpc(
                 "user_setup",
@@ -156,14 +167,14 @@ def import_anilist_user(username: str):
                     "p_directors_affinity": director_affinities,
                 }
             ).execute()
-        except Exception as e:
-            logger.error(f"Supabase RPC 'user_setup' failed for '{username}': {str(e)}")
-            raise
 
-        return {"status": "success", "message": f"User {username} successfully imported."};
-    else:
-        return {"status": "success", "message": f"User {username} is up to date."
-    }
+            yield json.dumps({"step": "complete", "message": f"User {username} successfully imported."}) + "\n"
+            
+        except Exception as e:
+            logger.error(f"Import failed for '{username}': {str(e)}")
+            yield json.dumps({"error": "An unexpected error occurred during import.", "status_code": 500}) + "\n"
+
+    return StreamingResponse(generate_progress(), media_type="application/x-ndjson")
 
 @app.get("/api/user-exists/{username}")
 def user_exists(username: str):

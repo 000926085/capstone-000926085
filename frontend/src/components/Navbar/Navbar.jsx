@@ -14,7 +14,7 @@ export default function Navbar() {
     return (
         <nav className="nav">
             {/* Site icon, title and slogan. */}
-            <div className='nav-info'>
+            <div className='nav-info' onClick={() => navigate('/')}>
                 <img className='site-logo' src={logo}></img>
                 <div className='text-group'>
                     <span className='title'>AniReco</span>
