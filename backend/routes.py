@@ -146,6 +146,7 @@ def import_anilist_user(username: str):
             ]
             if not valid_planning_anime: 
                 yield json.dumps({"error": "This AniList account has no valid anime within their planning list.", "status_code": 400 }) + "\n"
+                return;
 
             yield json.dumps({"step": "calculating", "message": "Calculating category affinities..."}) + "\n"
             genre_affinities = calculations.affinity_score(all_anime, "genres", user_avg, "genre")
@@ -153,20 +154,55 @@ def import_anilist_user(username: str):
             studio_affinities = calculations.affinity_score(all_anime, "studios", user_avg, "studio")
             director_affinities = calculations.affinity_score(all_anime, "staff", user_avg, "director")
 
-            yield json.dumps({"step": "saving", "message": "Saving data to Supabase..."}) + "\n"
-            # Postgres function for handling behaviour when provided with a user to setup.
-            supabase.rpc(
-                "user_setup",
-                {
-                    "p_anime": all_anime,
-                    "p_username": username,
-                    "p_avatar": avatar,
-                    "p_genres_affinity": genre_affinities,
-                    "p_tags_affinity": tag_affinities,
-                    "p_studios_affinity": studio_affinities,
-                    "p_directors_affinity": director_affinities,
-                }
-            ).execute()
+            # Seperate insertion into batches.
+            BATCH_SIZE = 100
+            total_batches = (
+                len(all_anime) + BATCH_SIZE - 1
+            ) // BATCH_SIZE
+
+            yield json.dumps({"step": "saving", "message": f"Saving data to Supabase in {total_batches} batches..."}) + "\n"
+
+            for batch_index, start in enumerate(range(0, len(all_anime), BATCH_SIZE), start=1):
+                batch = all_anime[start:start + BATCH_SIZE]
+
+                yield json.dumps({"step": "saving_batch",
+                    "message": (
+                        f"Saving batch {batch_index}/{total_batches} "
+                        f"({len(batch)} anime)..."
+                    ),
+                    "batch": batch_index,
+                    "total_batches": total_batches
+                }) + "\n"
+
+                supabase.rpc(
+                    "user_setup",
+                    {
+                        "p_anime": batch,
+                        "p_username": username,
+                        "p_avatar": avatar,
+                        "p_genres_affinity": [],
+                        "p_tags_affinity": [],
+                        "p_studios_affinity": [],
+                        "p_directors_affinity": [],
+                        "p_update_timestamp": False
+                    }
+                ).execute()
+
+                yield json.dumps({"step": "saving_affinities", "message": "Saving category affinities..."}) + "\n"
+
+                supabase.rpc(
+                    "user_setup",
+                    {
+                        "p_anime": [],
+                        "p_username": username,
+                        "p_avatar": avatar,
+                        "p_genres_affinity": genre_affinities,
+                        "p_tags_affinity": tag_affinities,
+                        "p_studios_affinity": studio_affinities,
+                        "p_directors_affinity": director_affinities,
+                        "p_update_timestamp": True
+                    }
+                ).execute()
 
             yield json.dumps({"step": "complete", "message": f"User {username} successfully imported."}) + "\n"
             

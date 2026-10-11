@@ -13,12 +13,22 @@ import ImportProgress from '../ImportProgress/ImportProgress';
 export default function SearchForm({ onSuccess, isCarouselLoaded }) {
     const [username, setUsername] = useState('');
 
-    const { importUser, loading, showModal, currentStepIndex, err, STEPS } = useImportUser();
+    const {
+      importUser,
+      loading,
+      showModal,
+      currentStepIndex,
+      currentBatch,
+      totalBatches,
+      err,
+      STEPS
+    } = useImportUser();
+
     const handleSubmit = async (e) => {
       e.preventDefault();
       await importUser(username, onSuccess);
     };
-    
+
     return (
       <>
         <form onSubmit={handleSubmit}>
@@ -34,21 +44,29 @@ export default function SearchForm({ onSuccess, isCarouselLoaded }) {
           {/* User input field. */}
           <label>
             AniList Username
-            <input type="text" id="username_input" value={username} onChange={(e) => setUsername(e.target.value)} placeholder='...'/>
+            <input
+              type="text"
+              id="username_input"
+              value={username}
+              onChange={(e) => setUsername(e.target.value)}
+              placeholder="username"
+            />
           </label>
 
           <button type="submit" disabled={loading || !isCarouselLoaded}>
-            {loading ? "Loading..." : "Find Recommendations"} 
+            {loading ? "Loading..." : "Find Recommendations"}
           </button>
         </form>
 
         {/* Modal pop-up triggered during import */}
-        <ImportProgress 
-          isOpen={showModal} 
-          currentStepIndex={currentStepIndex} 
-          steps={STEPS} 
-          err={err} 
+        <ImportProgress
+          isOpen={showModal}
+          currentStepIndex={currentStepIndex}
+          steps={STEPS}
+          currentBatch={currentBatch}
+          totalBatches={totalBatches}
+          err={err}
         />
-    </>
-  )
+      </>
+    );
 }

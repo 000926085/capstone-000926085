@@ -1,10 +1,11 @@
 import React, { useState, useRef, useLayoutEffect } from 'react';
+
 import { openAniListPage } from '../../utils/open_anilist_page';
 import { getScoreColour } from '../../utils/getScoreColour';
 
-import './AnimeCard.modules.css'
-
 import AffinityBreakdown from '../AffinityBreakdown/AffinityBreakdown';
+
+import './AnimeCard.modules.css'
 
 /**
  * Constructs a card containing preliminary data about an anime to be shown as recommendations.
@@ -14,11 +15,13 @@ import AffinityBreakdown from '../AffinityBreakdown/AffinityBreakdown';
  */
 export default function AnimeCard({anime = {}, rec_length}) {
     const title = (anime.title?.romaji || anime.title?.english || "");
+    const MAX_TAGS = 10;
 
-    const MAX_TAGS = 5;
     const genres = anime.genres || [];
-    const rawTags = anime.tags || [];
-    const tags = rawTags.sort((a, b) => b.similarity - a.similarity) || [];
+    const tags = [...(anime.tags || [])].sort(
+        (a, b) => b.similarity - a.similarity
+    );
+
     const visibleTags = tags.slice(0, MAX_TAGS);
     const remainingCount = tags.length - MAX_TAGS;
 
