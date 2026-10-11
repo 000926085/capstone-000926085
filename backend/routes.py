@@ -296,10 +296,63 @@ def fetch_planning_data(username: str):
     # Fetch the user's entire anime list.
     user_anime_res = (
         supabase.table("users_anime")
-        .select("anime_id, list_status, score, anime(popularity)")
+        .select("""
+            anime_id,
+            list_status,
+            score,
+            anime(
+                popularity,
+                title,
+                cover,
+                anilist_id,
+                anime_studios(studios(name)),
+                anime_directors(directors(name))
+            )
+        """)
         .eq("user_id", user_id)
         .execute()
     )
+
+    user_history_by_studio = {}
+    user_history_by_director = {}
+
+    for item in user_anime_res.data:
+        score = item.get("score")
+        history_anime = item.get("anime")
+
+        if not history_anime or score is None or score <= 0:
+            continue
+
+        anime = {
+            "title": history_anime.get("title"),
+            "anilist_id": history_anime.get("anilist_id"),
+            "cover": history_anime.get("cover"),
+            "user_score": score
+        }
+
+        # Index this anime under each studio associated with it.
+        for relation in history_anime.get("anime_studios", []):
+            studio = relation.get("studios")
+            if not studio or not studio.get("name"):
+                continue
+
+            name = studio["name"]
+            user_history_by_studio.setdefault(name, []).append(anime)
+
+        # Index this anime under each director associated with it.
+        for relation in history_anime.get("anime_directors", []):
+            director = relation.get("directors")
+            if not director or not director.get("name"):
+                continue
+
+            name = director["name"]
+            user_history_by_director.setdefault(name, []).append(anime)
+
+    # Put the highest-rated anime first for each studio/director.
+    for history in (user_history_by_studio, user_history_by_director):
+        for shows in history.values():
+            shows.sort(key=lambda show: show["user_score"], reverse=True)
+
     user_anime = {
         item["anime_id"]: {
             "status": item["list_status"],
@@ -441,7 +494,9 @@ def fetch_planning_data(username: str):
                 genre_affinities,
                 tag_affinities,
                 studio_affinities,
-                director_affinities
+                director_affinities,
+                user_history_by_studio=user_history_by_studio,
+                user_history_by_director=user_history_by_director
             )
         })
 

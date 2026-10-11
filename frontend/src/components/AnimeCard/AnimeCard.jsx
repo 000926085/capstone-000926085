@@ -14,6 +14,8 @@ import './AnimeCard.modules.css'
  * @returns {JSX.Element} a graphical representation of an anime.
  */
 export default function AnimeCard({anime = {}, rec_length}) {
+    const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
+
     const title = (anime.title?.romaji || anime.title?.english || "");
     const MAX_TAGS = 10;
 
@@ -38,7 +40,11 @@ export default function AnimeCard({anime = {}, rec_length}) {
                         <span className="rank-badge">#{anime.rank}</span>
                         <span className="total-count">of {rec_length}</span>
                     </div>
-                    <span className="points-badge" onClick={() => console.log(anime.desirability)}>{anime.desirability?.total_score} pts</span>
+                    <span 
+                        className="points-badge" 
+                        onClick={() => setIsBreakdownOpen(true)}>
+                        {anime.desirability?.total_score} pts
+                    </span>
                 </div>
 
                 <h3 className="anime-title" data-testid="anime-card-title">
@@ -84,7 +90,14 @@ export default function AnimeCard({anime = {}, rec_length}) {
                     </button>
                 </div>
             </div>
-            {/* <AffinityBreakdown desirability={anime.desirability}/> */}
+
+            {isBreakdownOpen && (
+                <AffinityBreakdown
+                    desirability={anime.desirability}
+                    title={title}
+                    onClose={() => setIsBreakdownOpen(false)}
+                />
+            )}
         </div>
     );
 }

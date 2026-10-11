@@ -215,9 +215,66 @@ def calculate_category_affinity(items, affinities, use_similarity=False):
     
     return average_affinity * bonus
 
+def calculate_item_contributions(
+    items,
+    affinities,
+    base_score,
+    category_weight,
+    use_similarity=False
+):
+    if not items:
+        return []
+
+    known_affinities = list(affinities.values())
+    fallback = (
+        sum(known_affinities) / len(known_affinities)
+        if known_affinities else 1.0
+    )
+
+    bonus = 1 + 0.05 * math.log(len(items))
+    contributions = []
+
+    for item in items:
+        if isinstance(item, str):
+            name, similarity = item, 100
+        else:
+            name = item["name"]
+            similarity = item.get("similarity") or 0
+
+        affinity = affinities.get(name, fallback)
+
+        if use_similarity:
+            weighted_affinity = (
+                1.0 + (affinity - 1.0) * similarity / 100
+            )
+        else:
+            weighted_affinity = affinity
+
+        points = (
+            base_score
+            * category_weight
+            * (weighted_affinity * bonus - 1.0)
+            / len(items)
+        )
+
+        contributions.append({
+            "name": name,
+            "points_contributed": round(points, 4),
+            "affinity_multiplier": round(weighted_affinity, 4)
+        })
+
+        if use_similarity:
+            contributions[-1]["similarity"] = similarity
+
+    return sorted(
+        contributions,
+        key=lambda item: item["points_contributed"],
+        reverse=True
+    )
+
 def calculate_desirability(
-    anime, 
-    max_popularity, 
+    anime,
+    max_popularity,
     anilist_recommendations,
     genres,
     tags,
@@ -226,7 +283,9 @@ def calculate_desirability(
     genre_affinities,
     tag_affinities,
     studio_affinities,
-    director_affinities
+    director_affinities,
+    user_history_by_studio=None,
+    user_history_by_director=None
 ):
     mean_score = anime.get("mean_score") or 0
     popularity = anime.get("popularity") or 1
@@ -271,6 +330,64 @@ def calculate_desirability(
     studio_points = base_score * 0.15 * (studio_multiplier - 1.0)
     director_points = base_score * 0.15 * (director_multiplier - 1.0)
 
+   # Calculate individual contributions for each category.
+    genre_details = calculate_item_contributions(
+        genres, genre_affinities, base_score, 0.40
+    )
+
+    tag_details = calculate_item_contributions(
+        tags, tag_affinities, base_score, 0.30,
+        use_similarity=True
+    )
+
+    # Sort by contribution, highest first, then select the top three.
+    studio_details = sorted(
+        calculate_item_contributions(
+            studios, studio_affinities, base_score, 0.15
+        ),
+        key=lambda item: item["points_contributed"],
+        reverse=True
+    )[:3]
+
+    director_details = sorted(
+        calculate_item_contributions(
+            directors, director_affinities, base_score, 0.15
+        ),
+        key=lambda item: item["points_contributed"],
+        reverse=True
+    )[:3]
+
+    # Attach up to three highest-rated anime for each matching studio.
+    user_history_by_studio = user_history_by_studio or {}
+
+    for studio in studio_details:
+        studio["top_anime"] = user_history_by_studio.get(
+            studio["name"], []
+        )[:3]
+
+    # Attach up to three highest-rated anime for each matching director.
+    user_history_by_director = user_history_by_director or {}
+
+    for director in director_details:
+        director["top_anime"] = user_history_by_director.get(
+            director["name"], []
+        )[:3]
+
+    details = {
+        "genres": sorted(
+            genre_details,
+            key=lambda item: item["points_contributed"],
+            reverse=True
+        )[:3],
+        "tags": sorted(
+            tag_details,
+            key=lambda item: item["points_contributed"],
+            reverse=True
+        )[:3],
+        "studios": studio_details,
+        "directors": director_details
+    }
+
     return {
         "base_score": round(base_score, 4),
         "recommendation_bonus": round(recommendation_bonus_points, 4),
@@ -285,5 +402,6 @@ def calculate_desirability(
             "studios": studio_points,
             "directors": director_points
         },
+        "details": details,
         "total_score": round(total_score, 2)
     }
