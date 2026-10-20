@@ -11,6 +11,7 @@ export function useRecommendations(username) {
     const [lastUpdated, setLastUpdated] = useState(null);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState(false);
+    const [pfp, setPfp] = useState(null);
 
     useEffect(() => {
         let mounted = true;
@@ -28,6 +29,7 @@ export function useRecommendations(username) {
                 if (mounted) {
                     setAnime(data.planning_anime || []);
                     setLastUpdated(data.last_updated || null);
+                    setPfp(data.pfp || null);
                 }
             } catch (err) {
                 console.error(err);
@@ -47,5 +49,5 @@ export function useRecommendations(username) {
         .sort((a, b) => b.desirability.total_score - a.desirability.total_score)
         .map((anime, index) => ({ ...anime, rank: index + 1 }));
 
-    return { anime: rankedAnime, lastUpdated, loading, error };
+    return { anime: rankedAnime, lastUpdated, pfp, loading, error };
 }

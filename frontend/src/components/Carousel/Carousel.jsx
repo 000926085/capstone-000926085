@@ -16,13 +16,32 @@ export default function Carousel({ onLoad }) {
     }, [onLoad]);
 
     const [posters, setPosters] = useState([]);
+    const [isLoaded, setIsLoaded] = useState(false);
     const [emblaRef] = useEmblaCarousel(
         { loop: true, align: 'center', watchDrag: false },
         [AutoScroll({ speed: 1, stopOnInteraction: false, stopOnMouseEnter: false })]
     );
 
     useEffect(() => {
+        const timer = setTimeout(() => {
+            setIsLoaded(true);
+        }, 50); 
+
+        return () => clearTimeout(timer);
+    }, []);
+
+    useEffect(() => {
         const fetchPosters = async () => {
+            const cachedPosters = sessionStorage.getItem('anime_carousel_posters');
+            if (cachedPosters) {
+                try { 
+                    setPosters(JSON.parse(cachedPosters));
+                    return;
+                } catch (e) {
+                    sessionStorage.removeItem('anime_carousel_posters');
+                }
+            }
+
             try {
                 const res = await fetch(`http://localhost:8000/api/anime-carousel`);
 
@@ -43,21 +62,24 @@ export default function Carousel({ onLoad }) {
                     }));
 
                 // If there aren't enough posters, fill in the rest with the default posters.
-                setPosters([
+                const finalPosters = [
                     ...anime,
                     ...DEFAULT_POSTERS.slice(0, (20 - anime.length))
-                ]);
+                ]
 
+                sessionStorage.setItem('anime_carousel_posters', JSON.stringify(finalPosters));
+                setPosters(finalPosters);
             } catch (err) {
                 console.error(err);
                 setPosters(DEFAULT_POSTERS);
             }
-        }
+        };
+
         fetchPosters();
     }, []);
 
     return (
-        <div className={`carousel-container ${posters.length !== 0 ? 'fade-in' : ''}`}>
+        <div className={`carousel-container ${isLoaded ? 'fade-in' : ''}`}>
             <h1 className='carousel-slogan'>Find your new favourite, with AniReco.</h1>
             <div className={`embla ${posters.length !== 0 ? 'fade-in' : ''}`}>
                 <div className="embla__viewport" ref={emblaRef}>

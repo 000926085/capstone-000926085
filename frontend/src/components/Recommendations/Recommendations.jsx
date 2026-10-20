@@ -19,7 +19,7 @@ const LIST_STATUSES = [
 
 export default function Recommendations() {
     const { username } = useParams();
-    const { anime, lastUpdated, loading, error } = useRecommendations(username);
+    const { anime, lastUpdated, pfp, loading, error } = useRecommendations(username);
 
     // State and handlers for controls.
     const [selectedStatuses, setSelectedStatuses] = useState(LIST_STATUSES);
@@ -82,8 +82,13 @@ export default function Recommendations() {
 
     return (
         <div className="recommendations-container">
-            <h2 style={{color: "black"}}>Recommendations for {username}</h2>
-            <h3>Last Updated: {lastUpdated}</h3>
+            <div className="user-container">
+            <img className="userpfp" src={pfp} alt={username} />
+                <div className="user-info">
+                    <h2 style={{color: "black"}}>Recommendations for {username}</h2>
+                    <h3>Last Updated: {lastUpdated}</h3>
+                </div>
+            </div>
 
             <FilterBar
                 selectedStatuses={selectedStatuses}

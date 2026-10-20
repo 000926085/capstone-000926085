@@ -255,10 +255,9 @@ def fetch_planning_data(username: str):
             planning_anime (Object): contains data pertaining to an anime, as well as the user's relation to it.
     """
 
-    # Fetch the user_id.
     user_res = (
         supabase.table("users")
-        .select("user_id, last_updated", count="exact")
+        .select("user_id, last_updated, pfp", count="exact")
         .eq("username", username)
         .maybe_single()
         .execute()
@@ -268,7 +267,7 @@ def fetch_planning_data(username: str):
         raise HTTPException(status_code=404, detail=f"User '{username}' not found.")
 
     data = user_res.data
-    user_id = data["user_id"]
+    user_id, pfp = data["user_id"], data["pfp"]
 
     # Fetch PLANNING or PAUSED anime within the user's list. 
     # Also fetch genres, tags, studios, director and AniList's recommendations for each anime.
@@ -500,4 +499,4 @@ def fetch_planning_data(username: str):
             )
         })
 
-    return {"last_updated": data["last_updated"], "planning_anime": anime_list}
+    return {"last_updated": data["last_updated"], "planning_anime": anime_list, "pfp": pfp}
