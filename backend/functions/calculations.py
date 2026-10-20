@@ -301,6 +301,7 @@ def calculate_desirability(
 
     # Has the user enjoyed other anime found to be similar to this one? 
     recommendation_bonus_points = recommendation_bonus(anilist_recommendations) 
+    recommendation_points = recommendation_bonus_points * 0.75
 
     # How do the categories of this anime match the user's preferences?
     genre_multiplier = calculate_category_affinity(genres, genre_affinities)
@@ -321,7 +322,7 @@ def calculate_desirability(
     # Calculate the final score used to sort the anime on the frontend.
     total_score = (
         (base_score * affinity_multiplier)
-        + (recommendation_bonus_points * 0.75)
+        + (recommendation_points)
     )
 
     # Calculate individual point contributions
@@ -390,7 +391,7 @@ def calculate_desirability(
 
     return {
         "base_score": round(base_score, 4),
-        "recommendation_bonus": round(recommendation_bonus_points, 4),
+        "recommendation_bonus": round(recommendation_points, 4),
         "genre_multiplier": round(genre_multiplier, 4),
         "tag_multiplier": round(tag_multiplier, 4),
         "studio_multiplier": round(studio_multiplier, 4),

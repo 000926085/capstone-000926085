@@ -4,6 +4,9 @@ import { useState } from 'react'
 import Navbar from "./components/Navbar/Navbar"
 import SearchForm from './components/SearchForm/SearchForm'
 import Recommendations from './components/Recommendations/Recommendations'
+import Login from './components/Login/Login'
+import AdminDashboard from './components/AdminDashboard/AdminDashboard'
+import ProtectedRoute from './components/ProtectedRoute'
 import Carousel from './components/Carousel/Carousel'
 
 import './App.css'
@@ -22,6 +25,15 @@ function App() {
 
           {/* Recommendations page. */}
           <Route path="/recommendations/:username" element={<Recommendations />} />
+
+           {/* Login page. */}
+          <Route path="/login" element={<Login />} />
+          <Route path="/admin-dashboard" 
+          element={
+            <ProtectedRoute>
+              <AdminDashboard />
+            </ProtectedRoute>
+          }/>
         </Routes>
       </main>
       
@@ -34,6 +46,7 @@ function App() {
 
 function Home({ isCarouselLoaded }) {
   const navigate = useNavigate();
+  
   const handleUserImported = (username) => {
     navigate(`/recommendations/${username}`);
   };

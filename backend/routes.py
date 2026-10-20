@@ -9,6 +9,8 @@ from fastapi import FastAPI, HTTPException
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from supabase_client import supabase
+from pydantic import BaseModel
+import bcrypt
 
 import functions.helpers as helpers
 import functions.calculations as calculations
@@ -33,6 +35,10 @@ app.add_middleware(
     allow_methods=["*"],
     allow_headers=["*"],
 )
+
+class LoginRequest(BaseModel):
+    username: str
+    password: str
 
 @app.exception_handler(Exception)
 async def global_exception_handler(request: Request, exc: Exception):
@@ -60,6 +66,35 @@ def test_error():
     Testing route to verify that the internal logging is functional.
     """
     raise RuntimeError("Test error to verify logging functionalities.")
+
+@app.post("/api/login")
+async def login(credentials: LoginRequest):
+    try:
+        account_query = (
+            supabase.table("accounts")
+            .select("*", count="exact")
+            .eq("username", credentials.username)
+            .execute()
+        )
+
+        if not account_query.data or len(account_query.data) == 0:
+            raise HTTPException(status_code=401, detail="Invalid credentials. Please try again.")
+
+        user = account_query.data[0]
+        stored_hash = user["password"]
+        input_password_bytes = credentials.password.encode("utf-8")
+        stored_hash_bytes = stored_hash.encode("utf-8") if isinstance(stored_hash, str) else stored_hash
+
+        if not bcrypt.checkpw(input_password_bytes, stored_hash_bytes):
+            raise HTTPException(status_code=401, detail="Invalid credentials. Please try again.")
+
+        return {"access_token": "mock_token", "token_type": "bearer"}
+
+    except HTTPException as he:
+        raise he
+    except Exception as e:
+        logger.error(f"Login failed for '{credentials.username}': {str(e)}")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred during login.")
 
 @app.post("/api/import-anilist-user/{username}")
 def import_anilist_user(username: str):

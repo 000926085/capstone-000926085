@@ -25,7 +25,7 @@ export default function Navbar() {
             {/* Home and login buttons. */}
             <div className='nav-buttons' style={{"gap": "24px"}}>
                 <img className='img-button' src={home} title="Home" onClick={() => navigate('/')}></img>
-                <img className='img-button' src={login} title="Login"></img>
+                <img className='img-button' src={login} title="Login" onClick={() => navigate('/login')}></img>
             </div>
         </nav>
     )
