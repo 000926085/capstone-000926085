@@ -1,4 +1,3 @@
-// hooks/useRecommendations.js
 import { useState, useEffect } from 'react';
 
 /**

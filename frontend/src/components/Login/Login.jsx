@@ -55,6 +55,7 @@ export default function Login() {
                         value={username}
                         onChange={(e) => setUsername(e.target.value)}
                         placeholder="username"
+                        data-testid="username-input"
                     />
                 </label>
 
@@ -67,12 +68,14 @@ export default function Login() {
                             value={password}
                             onChange={(e) => setPassword(e.target.value)}
                             placeholder="••••••••"
+                            data-testid="password-input"
                         />
                         <button
                             type="button"
                             className="password-toggle-btn-beside"
                             onClick={() => setShowPassword(!showPassword)}
                             aria-label="Toggle password visibility"
+                            data-testid="toggle-visibility"
                         >
                             {showPassword ? (
                                 <svg viewBox="0 0 24 24" width="20" height="20" stroke="currentColor" strokeWidth="2" fill="none">
@@ -89,8 +92,8 @@ export default function Login() {
                     </div>
                 </label>
 
-                {error && <div className="error-message" style={{ color: 'red' }}>{error}</div>}
-                <button type="submit">Sign In</button>
+                {error && <div className="error-message" style={{ color: 'red' }} data-testid="error-msg">{error}</div>}
+                <button type="submit" data-testid="sign-in-button">Sign In</button>
             </form>
         </>
     )

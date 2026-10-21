@@ -1,16 +1,14 @@
 import { useMemo, useState } from 'react';
 import { useParams, Link } from 'react-router-dom';
 
-import ReactPaginateModule from 'react-paginate';
-const ReactPaginate = ReactPaginateModule.default || ReactPaginateModule;
-
 import AnimeCard from '../AnimeCard/AnimeCard';
+import FilterBar from '../FilterBar/FilterBar';
+import Pagination from '../Pagination/Pagination';
 
 import { useRecommendations } from '../../hooks/useRecommendations';
 import { filterAnime } from '../../utils/filterAnime';
 
 import './Recommendations.modules.css'
-import FilterBar from '../FilterBar/FilterBar';
 
 const LIST_STATUSES = [
     { status: "PLANNING", checked: true },
@@ -107,31 +105,17 @@ export default function Recommendations() {
                         );
                     })
                 ) : (
-                    <p>No anime found matching your criteria.</p>
+                    <form>
+                        <h2 className="brand-name">No Anime Found</h2>
+                        <p className="error-subtitle">There are no anime within this anime list that match your criteria.</p>
+                    </form>
                 )}
 
-                {pageCount > 1 && (
-                    <ReactPaginate
-                        breakLabel="..."
-                        nextLabel="Next >"
-                        onPageChange={handlePageClick}
-                        pageRangeDisplayed={5}
-                        pageCount={pageCount}
-                        previousLabel="< Previous"
-                        renderOnZeroPageCount={null}
-                        forcePage={currentPage}
-                        containerClassName="pagination"
-                        activeClassName="active"
-                        pageClassName="page-item"
-                        pageLinkClassName="page-link"
-                        previousClassName="page-item"
-                        previousLinkClassName="page-link"
-                        nextClassName="page-item"
-                        nextLinkClassName="page-link"
-                        breakClassName="page-item"
-                        breakLinkClassName="page-link"
-                    />
-                )}
+               <Pagination
+                    pageCount={pageCount}
+                    currentPage={currentPage}
+                    onPageChange={handlePageClick}
+                />
             </div>
         </div>
     );

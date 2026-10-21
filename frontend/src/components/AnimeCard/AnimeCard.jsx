@@ -4,6 +4,7 @@ import { openAniListPage } from '../../utils/open_anilist_page';
 import { getScoreColour } from '../../utils/getScoreColour';
 
 import AffinityBreakdown from '../AffinityBreakdown/AffinityBreakdown';
+import InformationPage from '../InformationPage/InformationPage';
 
 import './AnimeCard.modules.css'
 
@@ -15,6 +16,7 @@ import './AnimeCard.modules.css'
  */
 export default function AnimeCard({anime = {}, rec_length}) {
     const [isBreakdownOpen, setIsBreakdownOpen] = useState(false);
+    const [isInformationOpen, setIsInformationOpen] = useState(false);
 
     const title = (anime.title?.romaji || anime.title?.english || "");
     const MAX_TAGS = 10;
@@ -85,7 +87,7 @@ export default function AnimeCard({anime = {}, rec_length}) {
                             <span className="stat-value">{(anime.popularity).toLocaleString()}</span>
                         </div>
                     </div>
-                    <button className="details-btn">
+                    <button className="details-btn" data-testid="details-btn" onClick={() => setIsInformationOpen(true)}>
                         Details <span className="btn-arrow">→</span>
                     </button>
                 </div>
@@ -96,6 +98,12 @@ export default function AnimeCard({anime = {}, rec_length}) {
                     desirability={anime.desirability}
                     title={title}
                     onClose={() => setIsBreakdownOpen(false)}
+                />
+            )}
+            {isInformationOpen && (
+                <InformationPage 
+                    anime_id={anime?.anilist_id}
+                    onClose={() => setIsInformationOpen(false)}
                 />
             )}
         </div>

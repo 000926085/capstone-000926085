@@ -535,3 +535,45 @@ def fetch_planning_data(username: str):
         })
 
     return {"last_updated": data["last_updated"], "planning_anime": anime_list, "pfp": pfp}
+
+@app.get("/api/admin-panel-fetch-users")
+def admin_panel_fetch_users():
+    try:
+        supabase_query = (
+            supabase.table("users")
+            .select("*", count="exact")
+            .execute()
+        )
+
+        users = supabase_query.data
+        if not users or len(users) == 0:
+            return {"message": "No users found.", "users": []}
+            
+        return {"users": users}
+        
+    except Exception as e:
+        logger.error(f"Fetching users failed': {str(e)}")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred while fetching users.")
+
+@app.get("/api/fetch-anilist-details/{anime_id}")
+def get_anilist_details(anime_id: int):
+    try:
+        url = "https://graphql.anilist.co"
+        response = requests.post(url, json={
+            "query": gql.MEDIA_INFORMATION,
+            "variables": {"anime_id": anime_id}
+        })
+
+        if response.status_code != 200:
+            raise HTTPException(status_code=502, detail="Failed to reach AniList API")
+            
+        data = response.json()
+        
+        if "errors" in data or not data.get("data", {}).get("Media"):
+            raise HTTPException(status_code=404, detail="Anime not found on AniList")
+            
+        return data["data"]["Media"]
+
+    except Exception as e:
+        logger.error(f"AniList fetch failed for ID {anime_id}: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error fetching details from AniList.")

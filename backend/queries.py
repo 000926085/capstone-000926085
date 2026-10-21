@@ -93,3 +93,20 @@ query ($username: String) {
     }
 }
 """
+
+""" Query to fetch specific fields from the AniList API that are not stored within the database. """
+MEDIA_INFORMATION = """
+query ($anime_id: Int) {
+    Media (id: $anime_id) {
+        bannerImage
+        season
+        seasonYear
+        description
+        trailer {
+            id
+            site
+            thumbnail
+        }
+    }
+}
+"""
