@@ -5,7 +5,7 @@ import requests
 import asyncio
 
 from logging.handlers import RotatingFileHandler
-from fastapi import FastAPI, HTTPException
+from fastapi import FastAPI, HTTPException, Request
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from supabase_client import supabase
