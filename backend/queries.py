@@ -110,3 +110,14 @@ query ($anime_id: Int) {
     }
 }
 """
+
+""" Lightweight query to ping the API on the admin dashboard page. """
+PING_API = """
+query {
+    Media(id: 1, type: ANIME) {
+        title {
+            romaji
+        }
+    }
+}
+"""

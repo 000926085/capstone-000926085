@@ -68,7 +68,7 @@ pytest==9.1.1
 python-dateutil==2.9.0.post0
 python-dotenv==1.2.2
 python-multipart==0.0.26
-pywin32==311
+pywin32==311; platform_system == "Windows"
 PyYAML==6.0.3
 realtime==2.28.3
 requests==2.33.1

@@ -1,0 +1,30 @@
+.card-container {
+    display: flex;
+    flex-direction: row;
+    justify-content: center;
+    gap: 16px;
+    padding: 20px;
+}
+
+.status-card {
+    display: flex;
+    flex-direction: column;
+    justify-content: space-between;
+    width: 220px;
+    padding: 16px 20px;
+    border-radius: 12px;
+    color: #ffffff;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+}
+
+.anime-card {
+    background: linear-gradient(90deg, #ff4040 0%, #ff7d7d 100%);
+}
+
+.users-card {
+    background: linear-gradient(90deg, #405dff 0%, #7a8eff 100%);
+}
+
+.api-card {
+    background: linear-gradient(90deg, #22ff2d 0%, #95ff9a 100%);
+}

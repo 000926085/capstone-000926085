@@ -1,11 +1,11 @@
 import { useNavigate } from 'react-router-dom';
 
-import { useFetchUsers } from '../../hooks/useFetchUsers';
+import { useFetchAdminDashboard } from '../../hooks/useFetchAdminDashboard';
 
 import "./AdminDashboard.modules.css"
 
 export default function AdminDashboard() {
-    const { users, message } = useFetchUsers();
+    const { users, anime, apiRes, timestamp, loading, error } = useFetchAdminDashboard();
 
     const navigate = useNavigate();
     const handleLogout = () => {
@@ -13,17 +13,23 @@ export default function AdminDashboard() {
         navigate('/login', { replace: true });
     };
 
+    console.log(apiRes?.errors);
+
     return (
-        <div className="admin-container">
-            <h1>Welcome to the Admin Page!</h1>
-            {users && users.length > 0 ? (
-                users.map((u) => (
-                    <p key={u.user_id}>{JSON.stringify(u)}</p>
-                ))
-                ) : (
-                <p>{message}</p>
-            )}
-            <button onClick={handleLogout} data-testid="logout">Sign out</button>
-        </div>
+        <>
+            <div className='card-container'>
+                <div className="status-card anime-card">
+                    <h2>Total Anime: {anime}</h2>
+                </div>
+
+                <div className="status-card users-card">
+                    <h2>Total Users: {users.length}</h2>
+                </div>
+
+                <div className="status-card api-card">
+                    <h2>API Status: ?</h2>
+                </div>
+            </div>
+        </>
     )
 }

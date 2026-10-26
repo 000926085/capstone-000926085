@@ -11,6 +11,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from supabase_client import supabase
 from pydantic import BaseModel
 import bcrypt
+from datetime import datetime
 
 import functions.helpers as helpers
 import functions.calculations as calculations
@@ -577,3 +578,38 @@ def get_anilist_details(anime_id: int):
     except Exception as e:
         logger.error(f"AniList fetch failed for ID {anime_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Error fetching details from AniList.")
+
+@app.get("/api/fetch-admin-dashboard")
+def fetch_admin_dashboard():
+    try:
+        users_query = (
+            supabase.table("users")
+            .select("*", count="exact")
+            .execute()
+        )
+        users = users_query.data
+
+        anime_query = (
+            supabase.table("anime")
+            .select("*", count="exact")
+            .limit(0) 
+            .execute()
+        )
+        anime = anime_query.count
+
+        url = "https://graphql.anilist.co"
+        response = requests.post(url, json={
+            "query": gql.PING_API
+        })
+        data = response.json()
+
+        return {
+            "users": users,
+            "anime": anime,
+            "api_res": data,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %I:%M %p")
+        }
+
+    except Exception as e:
+        logger.error(f"An error occured while fetching admin dashboard details.: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error fetching admin dashboard details.")
