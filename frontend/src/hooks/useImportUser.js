@@ -1,5 +1,5 @@
 import { useState } from 'react';
-import { API_URL } from '../../constants/anime';
+import { API_URL } from '../constants/anime';
 
 const STEPS = [
   { key: 'supabase_check', label: 'Checking database...' },

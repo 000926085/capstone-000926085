@@ -1,4 +1,4 @@
-import { API_URL } from '../../constants/anime';
+import { API_URL } from '../constants/anime';
 
 export async function attemptLogin(username, password) {
     const response = await fetch(`${API_URL}/api/login`, {

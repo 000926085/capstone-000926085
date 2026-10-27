@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { API_URL } from '../../constants/anime';
+import { API_URL } from '../constants/anime';
 
 export function useFetchAniListDetails({anime_id}) {
     const [details, setDetails] = useState(null);
