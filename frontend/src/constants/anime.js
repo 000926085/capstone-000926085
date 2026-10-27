@@ -1,3 +1,5 @@
+export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+
 export const DEFAULT_POSTERS = [
         { cover: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx180746-eqDiHbzoHMFh.jpg', anilist_id: 180746 },
         { cover: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx171627-ZN9D7P46yHnw.png', anilist_id: 171627 },

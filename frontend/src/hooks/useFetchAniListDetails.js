@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_URL } from '../../constants/anime';
 
 export function useFetchAniListDetails({anime_id}) {
     const [details, setDetails] = useState(null);
@@ -13,7 +14,7 @@ export function useFetchAniListDetails({anime_id}) {
             setError('');
 
             try {
-                const res = await fetch(`http://localhost:8000/api/fetch-anilist-details/${anime_id}`);
+                const res = await fetch(`${API_URL}/api/fetch-anilist-details/${anime_id}`);
                 console.log(res);
                 
                 if (!res.ok) throw new Error('Could not load anime details');

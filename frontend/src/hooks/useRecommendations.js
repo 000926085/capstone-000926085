@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_URL } from '../../constants/anime';
 
 /**
  * Responsible for fetching the planning data.
@@ -20,7 +21,7 @@ export function useRecommendations(username) {
             setError(false);
 
             try {
-                const res = await fetch(`http://localhost:8000/api/fetch-planning-data/${username}`);
+                const res = await fetch(`${API_URL}/api/fetch-planning-data/${username}`);
                 if (!res.ok) throw new Error("User not found.");
                 
                 const data = await res.json();

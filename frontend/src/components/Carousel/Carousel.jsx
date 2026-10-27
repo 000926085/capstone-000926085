@@ -2,7 +2,7 @@ import React from 'react'
 import { useState, useEffect } from 'react';
 import useEmblaCarousel from 'embla-carousel-react'
 import AutoScroll from 'embla-carousel-auto-scroll';
-import { DEFAULT_POSTERS } from '../../constants/anime';
+import { API_URL, DEFAULT_POSTERS } from '../../constants/anime';
 import { openAniListPage } from '../../utils/open_anilist_page';
 import './Carousel.modules.css';
 
@@ -43,7 +43,7 @@ export default function Carousel({ onLoad }) {
             }
 
             try {
-                const res = await fetch(`http://localhost:8000/api/anime-carousel`);
+                const res = await fetch(`${API_URL}/api/anime-carousel`);
 
                 if (!res.ok) {
                     setPosters(DEFAULT_POSTERS);

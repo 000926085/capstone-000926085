@@ -1,4 +1,5 @@
 import { useState } from 'react';
+import { API_URL } from '../../constants/anime';
 
 const STEPS = [
   { key: 'supabase_check', label: 'Checking database...' },
@@ -32,7 +33,7 @@ export function useImportUser() {
 
     try {
       const res = await fetch(
-        `http://localhost:8000/api/import-anilist-user/${encodeURIComponent(trimmedUser)}`,
+        `${API_URL}/api/import-anilist-user/${encodeURIComponent(trimmedUser)}`,
         {
           method: 'POST',
           headers: { 'Content-Type': 'application/json' },

@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react';
+import { API_URL } from '../../constants/anime';
 
 export function useFetchAdminDashboard() {
     const [dashboard, setDashboard] = useState({
@@ -13,7 +14,7 @@ export function useFetchAdminDashboard() {
     useEffect(() => {
         const fetchData = async () => {
             try {
-                const res = await fetch('http://localhost:8000/api/fetch-admin-dashboard');
+                const res = await fetch(`${API_URL}/api/fetch-admin-dashboard`);
                 if (!res.ok) throw new Error("An error occured during your request.");
                 const data = await res.json();
 
