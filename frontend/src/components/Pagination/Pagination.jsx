@@ -1,7 +1,7 @@
 import ReactPaginateModule from 'react-paginate';
 const ReactPaginate = ReactPaginateModule.default || ReactPaginateModule;
 
-import './Pagination.modules.css';
+import styles from './Pagination.module.css';
 
 export default function Pagination({ pageCount, currentPage, onPageChange }) {
     if (pageCount <= 1) return null;
@@ -16,16 +16,16 @@ export default function Pagination({ pageCount, currentPage, onPageChange }) {
             previousLabel="< Previous"
             renderOnZeroPageCount={null}
             forcePage={currentPage}
-            containerClassName="pagination"
-            activeClassName="active"
-            pageClassName="page-item"
-            pageLinkClassName="page-link"
-            previousClassName="page-item"
-            previousLinkClassName="page-link"
-            nextClassName="page-item"
-            nextLinkClassName="page-link"
-            breakClassName="page-item"
-            breakLinkClassName="page-link"
+            containerClassName={styles['pagination']}
+            activeClassName={styles['active']}
+            pageClassName={styles['page-item']}
+            pageLinkClassName={styles['page-link']}
+            previousClassName={styles['page-item']}
+            previousLinkClassName={styles['page-link']}
+            nextClassName={styles['page-item']}
+            nextLinkClassName={styles['page-link']}
+            breakClassName={styles['page-item']}
+            breakLinkClassName={styles['page-link']}
         />
     );
 }

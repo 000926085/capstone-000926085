@@ -4,7 +4,8 @@ import useEmblaCarousel from 'embla-carousel-react'
 import AutoScroll from 'embla-carousel-auto-scroll';
 import { API_URL, DEFAULT_POSTERS } from '../../constants/anime';
 import { openAniListPage } from '../../utils/open_anilist_page';
-import './Carousel.modules.css';
+
+import styles from './Carousel.module.css';
 
 /**
  * Fetches anime posters from the database and constructs a carousel to display on the home page.
@@ -79,15 +80,15 @@ export default function Carousel({ onLoad }) {
     }, []);
 
     return (
-        <div className={`carousel-container ${isLoaded ? 'fade-in' : ''}`}>
-            <h1 className='carousel-slogan'>Find your new favourite, with AniReco.</h1>
-            <div className={`embla ${posters.length !== 0 ? 'fade-in' : ''}`}>
-                <div className="embla__viewport" ref={emblaRef}>
-                    <div className="embla__container">
+        <div className={`${styles['carousel-container']} ${isLoaded ? styles['fade-in'] : ''}`}>
+            <h1 className={styles['carousel-slogan']}>Find your new favourite, with AniReco.</h1>
+            <div className={`${styles.embla} ${posters.length !== 0 ? styles['fade-in'] : ''}`}>
+                <div className={styles['embla__viewport']} ref={emblaRef}>
+                    <div className={styles['embla__container']}>
                         {posters.map((anime, i) => {
                             return (
-                                <div key={i} className="embla__slide">
-                                    <img className="anime-poster" src={anime.cover} onClick={() => openAniListPage(anime.anilist_id)} />
+                                <div key={i} className={styles['embla__slide']}>
+                                    <img className={styles['anime-poster']} src={anime.cover} onClick={() => openAniListPage(anime.anilist_id)} />
                                 </div>
                             )
                         })}
@@ -95,5 +96,5 @@ export default function Carousel({ onLoad }) {
                 </div>
             </div>
         </div>
-    )
+    );
 }

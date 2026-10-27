@@ -6,7 +6,7 @@ import { getScoreColour } from '../../utils/getScoreColour';
 import AffinityBreakdown from '../AffinityBreakdown/AffinityBreakdown';
 import InformationPage from '../InformationPage/InformationPage';
 
-import './AnimeCard.modules.css'
+import styles from './AnimeCard.module.css';
 
 /**
  * Constructs a card containing preliminary data about an anime to be shown as recommendations.
@@ -30,33 +30,33 @@ export default function AnimeCard({anime = {}, rec_length}) {
     const remainingCount = tags.length - MAX_TAGS;
 
     return (
-        <div className="anime-card" data-testid="anime-card">
-            <div className="card-poster-wrapper">
-                <img src={anime.cover} alt={title} title={`View ${title} on AniList`}className="card-poster" onClick={() => openAniListPage(anime.anilist_id)}/>
+        <div className={styles['anime-card']} data-testid="anime-card">
+            <div className={styles['card-poster-wrapper']}>
+                <img src={anime.cover} alt={title} title={`View ${title} on AniList`} className={styles['card-poster']} onClick={() => openAniListPage(anime.anilist_id)}/>
             </div>
 
-            <div className="card-content">
+            <div className={styles['card-content']}>
                 {/* Header, title, points from algorithm and rank compared to other anime. */}
-                <div className="card-header">
-                    <div className="rank-container">
-                        <span className="rank-badge">#{anime.rank}</span>
-                        <span className="total-count">of {rec_length}</span>
+                <div className={styles['card-header']}>
+                    <div className={styles['rank-container']}>
+                        <span className={styles['rank-badge']}>#{anime.rank}</span>
+                        <span className={styles['total-count']}>of {rec_length}</span>
                     </div>
                     <span 
-                        className="points-badge" 
+                        className={styles['points-badge']}
                         onClick={() => setIsBreakdownOpen(true)}>
                         {anime.desirability?.total_score} pts
                     </span>
                 </div>
 
-                <h3 className="anime-title" data-testid="anime-card-title">
+                <h3 className={styles['anime-title']} data-testid="anime-card-title">
                     {title}
                 </h3>
 
                 {/* Genre and tag indicators. */}
-                <div className="attributes-container">
+                <div className={styles['attributes-container']}>
                     {genres.map((genre) => (
-                        <span key={typeof genre === 'object' ? genre.name : genre} className="chip genre-chip">
+                        <span  key={typeof genre === 'object' ? genre.name : genre} className={`${styles.chip} ${styles['genre-chip']}`}>
                             {typeof genre === 'object' ? genre.name : genre}
                         </span>
                     ))}
@@ -64,31 +64,31 @@ export default function AnimeCard({anime = {}, rec_length}) {
                     {visibleTags.map((tag) => {
                         const tagName = typeof tag === 'object' ? tag.name : tag;
                         return (
-                            <span key={tagName} className="chip tag-chip">
+                            <span key={tagName} className={`${styles.chip} ${styles['tag-chip']}`}>
                                 {tagName}
                             </span>
                         );
                     })}
 
                     {remainingCount > 0 && (
-                        <span className="chip count-chip">+{remainingCount} more</span>
+                        <span className={`${styles.chip} ${styles['count-chip']}`}>+{remainingCount} more</span>
                     )}
                 </div>
 
                 {/* Footer, AniList score, popularity and button for details. */}
-                <div className="card-footer">
-                    <div className="stats-row">
-                        <div className="stat-item">
-                            <span className="stat-label">Score</span>
-                            <span className="stat-value highlight" style={{color: getScoreColour(anime.mean_score)}}>{anime.mean_score}%</span>
+                <div className={styles['card-footer']}>
+                    <div className={styles['stats-row']}>
+                        <div className={styles['stat-item']}>
+                            <span className={styles['stat-label']}>Score</span>
+                            <span className={`${styles.highlight} ${styles['stat-value']}`} style={{color: getScoreColour(anime.mean_score)}}>{anime.mean_score}%</span>
                         </div>
-                        <div className="stat-item">
-                            <span className="stat-label">Popularity</span>
-                            <span className="stat-value">{(anime.popularity).toLocaleString()}</span>
+                        <div className={styles['stat-item']}>
+                            <span className={styles['stat-label']}>Popularity</span>
+                            <span className={styles['stat-value']}>{(anime.popularity).toLocaleString()}</span>
                         </div>
                     </div>
-                    <button className="details-btn" data-testid="details-btn" onClick={() => setIsInformationOpen(true)}>
-                        Details <span className="btn-arrow">→</span>
+                    <button className={styles['details-btn']} data-testid="details-btn" onClick={() => setIsInformationOpen(true)}>
+                        Details <span className={styles['btn-arrow']}>→</span>
                     </button>
                 </div>
             </div>

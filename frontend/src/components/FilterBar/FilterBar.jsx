@@ -1,4 +1,4 @@
-import "./FilterBar.modules.css";
+import styles from "./FilterBar.module.css";
 
 const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
 
@@ -14,11 +14,11 @@ const PAGE_SIZE_OPTIONS = [10, 25, 50, 100];
  */
 export default function FilterBar({selectedStatuses, onStatusChange, search, onSearchChange, itemsPerPage, onItemsPerPageChange}) {
     return (
-        <div className="filter-bar">
+        <div className={styles['filter-bar']}>
             {/* Status Checkboxes */}
-            <div className="filter-group">
+            <div className={styles['filter-group']}>
                 {selectedStatuses.map((s) => (
-                    <label key={s.status} className="filter-checkbox-label">
+                    <label key={s.status} className={styles['filter-checkbox-label']}>
                         <input
                             type="checkbox"
                             checked={s.checked}
@@ -30,10 +30,10 @@ export default function FilterBar({selectedStatuses, onStatusChange, search, onS
             </div>
 
             {/* Items Per Page Radios */}
-            <div className="filter-group">
-                <span className="filter-title">Items Per Page:</span>
+            <div className={styles['filter-group']}>
+                <span className={styles['filter-title']}>Items Per Page:</span>
                 {PAGE_SIZE_OPTIONS.map((option) => (
-                    <label key={option} className="filter-radio-label">
+                    <label key={option} className={styles['filter-radio-label']}>
                         <input
                             type="radio"
                             name="itemsPerPage"
@@ -47,8 +47,8 @@ export default function FilterBar({selectedStatuses, onStatusChange, search, onS
             </div>
 
             {/* Search Input */}
-            <div className="filter-group">
-                <label className="filter-title">
+            <div className={styles['filter-group']}>
+                <label className={styles['filter-title']}>
                     Search for an Anime: 
                     <input 
                         type="text" 

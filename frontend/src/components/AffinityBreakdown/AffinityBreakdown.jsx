@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import './AffinityBreakdown.modules.css'
+
+import styles from './AffinityBreakdown.module.css';
 
 const CATEGORY_INFO = {
     genres: { label: "Genres", multiplierKey: "genre_multiplier" },
@@ -58,26 +59,26 @@ export default function AffinityBreakdown({ desirability = {}, title, onClose })
     const totalScore = Number(desirability.total_score) || 0;
 
     return (
-        <div className="modal-overlay open" onClick={onClose}>
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
-                <button type="button" className="modal-close" onClick={onClose}>×</button>
+        <div className={`${styles['modal-overlay']} ${styles.open}`} onClick={onClose}>
+            <div className={styles['modal-content']} onClick={(e) => e.stopPropagation()}>
+                <button type="button" className={styles['modal-close']} onClick={onClose}>×</button>
 
                 {/* Header */}
-                <header className="breakdown-header">
-                    <h2 id="breakdown-title" className="breakdown-title">
+                <header className={styles['breakdown-header']}>
+                    <h2 id="breakdown-title" className={styles['breakdown-title']}>
                         Scoring Breakdown
                     </h2>
-                    <p className="breakdown-subtitle">
+                    <p className={styles['breakdown-subtitle']}>
                         {title}
                     </p>
                 </header>
 
                 {/* Calculated Score */}
-                <section className="breakdown-total">
-                    <span className="breakdown-total-label">
+                <section className={styles['breakdown-total']}>
+                    <span className={styles['breakdown-total-label']}>
                         Final Score
                     </span>
-                    <span className="breakdown-total-value">
+                    <span className={styles['breakdown-total-value']}>
                         {totalScore.toFixed(2)}
                         <span style={{ fontSize: "0.85rem" }}>
                             {" "}pts
@@ -86,35 +87,35 @@ export default function AffinityBreakdown({ desirability = {}, title, onClose })
                 </section>
 
                 {/* Breakdown points awarded by each component */}
-                <section className="breakdown-section">
-                    <h3 className="breakdown-section-title">
+                <section className={styles['breakdown-section']}>
+                    <h3 className={styles['breakdown-section-title']}>
                         Score Components
                     </h3>
 
-                    <div className="breakdown-rows">
-                        <div className="breakdown-row">
-                            <span className="breakdown-row-label">
+                    <div className={styles['breakdown-rows']}>
+                        <div className={styles['breakdown-row']}>
+                            <span className={styles['breakdown-row-label']}>
                                 Base Score
                             </span>
-                            <span className="breakdown-row-value">
+                            <span className={styles['breakdown-row-value']}>
                                 {Number(desirability.base_score).toFixed(2)} pts
                             </span>
                         </div>
 
-                        <div className="breakdown-row">
-                            <span className="breakdown-row-label">
+                        <div className={styles['breakdown-row']}>
+                            <span className={styles['breakdown-row-label']}>
                                 Affinity Contributions
                             </span>
-                            <span className={`breakdown-row-value ${getSignClass(affinityContribution)}`}>
+                            <span className={`${styles['breakdown-row-value']} ${styles[getSignClass(affinityContribution)]}`}>
                                 {formatPoints(affinityContribution)}
                             </span>
                         </div>
 
-                        <div className="breakdown-row">
-                            <span className="breakdown-row-label">
+                        <div className={styles['breakdown-row']}>
+                            <span className={styles['breakdown-row-label']}>
                                 AniList Recommendation Bonus
                             </span>
-                            <span className={`breakdown-row-value ${getSignClass(recommendationBonus)}`}>
+                            <span className={`${styles['breakdown-row-value']} ${styles[getSignClass(recommendationBonus)]}`}>
                                 {formatPoints(recommendationBonus)}
                             </span>
                         </div>
@@ -122,69 +123,69 @@ export default function AffinityBreakdown({ desirability = {}, title, onClose })
                 </section>
 
                 {/* Deeper look into affinity scores */}
-                <section className="breakdown-section">
-                    <h3 className="breakdown-section-title">
+                <section className={styles['breakdown-section']}>
+                    <h3 className={styles['breakdown-section-title']}>
                         Affinity Contributions
                     </h3>
 
-                    <p className="breakdown-section-description">
+                    <p className={styles['breakdown-section-description']}>
                         Expand a category to see its three biggest contributors.
                     </p>
 
-                    <div className="affinity-list">
+                    <div className={styles['affinity-list']}>
                         {categories.map((category) => {
                             const contributors = desirability.details?.[category.key] || [];
                             const supportsTopAnime = category.key === "directors" || category.key === "studios";
                             const singularCategoryName = category.key === "directors" ? "director" : "studio";
 
                             return (
-                                <details className="affinity-dropdown" key={category.key}>
-                                    <summary className="affinity-dropdown-header">
-                                        <span className="affinity-name">
+                                <details className={styles['affinity-dropdown']} key={category.key}>
+                                    <summary className={styles['affinity-dropdown-header']}>
+                                        <span className={styles['affinity-name']}>
                                             {category.label}
                                         </span>
 
-                                        <span className="affinity-dropdown-right">
-                                            <span className={`affinity-points ${getSignClass(category.contribution)}`}>
+                                        <span className={styles['affinity-dropdown-right']}>
+                                            <span className={`${styles['affinity-points']} ${styles[getSignClass(category.contribution)]}`}>
                                                 {formatPoints(category.contribution)}
                                             </span>
 
-                                            <span className="affinity-dropdown-arrow">▾</span>
+                                            <span className={styles['affinity-dropdown-arrow']}>▾</span>
                                         </span>
                                     </summary>
 
-                                    <div className="affinity-dropdown-content">
+                                    <div className={styles['affinity-dropdown-content']}>
                                     {contributors.length > 0 ? (
                                         contributors.map((contributor, index) => {
                                             const hasTopAnime = contributor.top_anime?.length > 0;
 
                                             return (
-                                                <div className="affinity-contributor" key={`${category.key}-${contributor.name}-${index}`}>
-                                                    <div className="affinity-contributor-header">
-                                                        <span className="affinity-contributor-name">
-                                                            <span className="affinity-contributor-rank">{index + 1}.</span>
+                                                <div className={styles['affinity-contributor']} key={`${category.key}-${contributor.name}-${index}`}>
+                                                    <div className={styles['affinity-contributor-header']}>
+                                                        <span className={styles['affinity-contributor-name']}>
+                                                            <span className={styles['affinity-contributor-rank']}>{index + 1}.</span>
                                                             {contributor.name}
                                                         </span>
 
-                                                        <span className={`affinity-points ${getSignClass(contributor.points_contributed)}`}>
+                                                        <span className={`${styles['affinity-points']} ${styles[getSignClass(contributor.points_contributed)]}`}>
                                                             {formatPoints(contributor.points_contributed)}
                                                         </span>
                                                     </div>
 
                                                     {supportsTopAnime && (
                                                         hasTopAnime ? (
-                                                            <div className="affinity-anime-list">
+                                                            <div className={styles['affinity-anime-list']}>
                                                                 {contributor.top_anime.map((anime, anime_index) => (
-                                                                    <div className="affinity-anime-entry" key={anime.anilist_id}>
-                                                                        <span className="affinity-anime-rank">
+                                                                    <div className={styles['affinity-anime-entry']} key={anime.anilist_id}>
+                                                                        <span className={styles['affinity-anime-rank']}>
                                                                         {index + 1}.{anime_index + 1}
                                                                         </span>
 
-                                                                        <span className="affinity-anime-details">
-                                                                            <span className="affinity-anime-title">
+                                                                        <span className={styles['affinity-anime-details']}>
+                                                                            <span className={styles['affinity-anime-title']}>
                                                                                 {anime.title.romaji}
                                                                             </span>
-                                                                            <span className="affinity-anime-score">
+                                                                            <span className={styles['affinity-anime-score']}>
                                                                                 User Score: {anime.user_score}
                                                                             </span>
                                                                         </span>
@@ -192,8 +193,8 @@ export default function AffinityBreakdown({ desirability = {}, title, onClose })
                                                                 ))}
                                                             </div>
                                                         ) : (
-                                                            <div className="affinity-anime-empty">
-                                                                <span className="affinity-anime-note">
+                                                            <div className={styles['affinity-anime-empty']}>
+                                                                <span className={styles['affinity-anime-note']}>
                                                                     This would be your first anime by this {singularCategoryName}!
                                                                 </span>
                                                             </div>
@@ -203,7 +204,7 @@ export default function AffinityBreakdown({ desirability = {}, title, onClose })
                                             );
                                         })
                                     ) : (
-                                        <p className="affinity-no-contributors">
+                                        <p className={styles['affinity-no-contributors']}>
                                             No individual contributors available.
                                         </p>
                                     )}

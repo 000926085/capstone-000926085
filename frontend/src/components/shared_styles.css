@@ -1,0 +1,25 @@
+.site-logo {
+  width: 64px;
+  height: 64px;
+}
+
+.brand-name {
+  font-weight: 500;
+  font-style: italic;
+  font-size: 28px;
+  color: #1a1a1a;
+  line-height: 1.1;
+}
+
+.subtitle {
+  font-style: italic;
+  font-size: 24px;
+  color: #333333;
+  margin-top: 4px;
+}
+
+.error-subtitle {
+  font-size: 20px;
+  color: #333333;
+  margin-top: 4px;
+}

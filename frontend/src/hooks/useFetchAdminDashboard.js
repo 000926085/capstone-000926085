@@ -19,11 +19,12 @@ export function useFetchAdminDashboard() {
                 const data = await res.json();
 
                 if (data) {
-                    console.log(data);
+                    const apiOnline = data.anime && (Array.isArray(data.anime) ? data.anime.length > 0 : true);
+
                     setDashboard({
                         users: data.users || [],
                         anime: data.anime || [],
-                        apiRes: data.api_res || 'ONLINE',
+                        apiRes: apiOnline ? 'ONLINE' : 'OFFLINE',
                         timestamp: data.users?.timestamp || new Date().toISOString()
                     });
                 }

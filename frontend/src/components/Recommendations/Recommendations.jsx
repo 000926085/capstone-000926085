@@ -8,7 +8,7 @@ import Pagination from '../Pagination/Pagination';
 import { useRecommendations } from '../../hooks/useRecommendations';
 import { filterAnime } from '../../utils/filterAnime';
 
-import './Recommendations.modules.css'
+import styles from './Recommendations.module.css'
 
 const LIST_STATUSES = [
     { status: "PLANNING", checked: true },
@@ -61,8 +61,8 @@ export default function Recommendations() {
     // Show a loading indicator while fetching.
     if (loading) {
         return (
-            <div className="status-container">
-                <h2 className="brand-name">Loading...</h2>
+            <div className={styles['status-container']}>
+                <h2 className={styles['brand-name']}>Loading...</h2>
             </div>
         );
     }
@@ -71,18 +71,18 @@ export default function Recommendations() {
     if (error) {
         return (
             <form>
-                <h2 className="brand-name">User Not Found</h2>
-                <p className="error-subtitle">An AniList account with the username {username} does not exist.</p>
-                <Link className="link" to="/">Return Home</Link>
+                <h2 className={styles['brand-name']}>User Not Found</h2>
+                <p className={styles['error-subtitle']}>An AniList account with the username {username} does not exist.</p>
+                <Link className={styles['link']} to="/">Return Home</Link>
             </form>
         )
     }
 
     return (
-        <div className="recommendations-container">
-            <div className="user-container">
-            <img className="userpfp" src={pfp} alt={username} />
-                <div className="user-info">
+        <div className={styles['recommendations-container']}>
+            <div className={styles['user-container']}>
+            <img className={styles['userpfp']} src={pfp} alt={username} />
+                <div className={styles['user-info']}>
                     <h2 style={{color: "black"}}>Recommendations for {username}</h2>
                     <h3>Last Updated: {lastUpdated}</h3>
                 </div>
@@ -97,7 +97,7 @@ export default function Recommendations() {
                 onItemsPerPageChange={handleItemsPerPageChange}
             />
 
-            <div className="anime-list">
+            <div className={styles['anime-list']}>
                 {currentItems.length > 0 ? (
                     currentItems.map((a) => {
                         return (
@@ -106,8 +106,8 @@ export default function Recommendations() {
                     })
                 ) : (
                     <form>
-                        <h2 className="brand-name">No Anime Found</h2>
-                        <p className="error-subtitle">There are no anime within this anime list that match your criteria.</p>
+                        <h2 className='brand-name'>No Anime Found</h2>
+                        <p className='error-subtitle'>There are no anime within this anime list that match your criteria.</p>
                     </form>
                 )}
 

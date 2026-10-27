@@ -1,7 +1,7 @@
 import { useFetchAniListDetails } from '../../hooks/useFetchAniListDetails'
 import { useEffect } from 'react';
 
-import './InformationPage.modules.css'
+import styles from './InformationPage.module.css'
 
 export default function InformationPage({anime_id, onClose}) {
     const { details, loading, error } = useFetchAniListDetails({ anime_id });
@@ -12,10 +12,10 @@ export default function InformationPage({anime_id, onClose}) {
             : null;
 
     return (
-        <div className="modal-overlay open" onClick={onClose}> 
-            <div className="modal-content" onClick={(e) => e.stopPropagation()}>
+        <div className={`${styles['modal-overlay']} ${styles.open}`} onClick={onClose}>
+            <div className={styles['modal-content']} onClick={(e) => e.stopPropagation()} >
                 {loading && <p>Loading anime details...</p>}
-                {error && <p className="error">{error}</p>}
+                {error && <p className={styles.error}>{error}</p>}
                 {!loading && !error && !details && (
                     <p>No anime details available.</p>
                 )}
@@ -25,7 +25,7 @@ export default function InformationPage({anime_id, onClose}) {
                     <p>Loading trailer...</p>
                 ) : trailerUrl ? (
                     <section>
-                        <div className="trailer-container">
+                        <div className={styles['trailer-container']}>
                             <iframe
                                 src={trailerUrl}
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"

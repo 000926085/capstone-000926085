@@ -42,6 +42,7 @@
     overflow-y: auto;
     overscroll-behavior: contain;
     overflow-wrap: anywhere;
+    scrollbar-gutter: stable; 
     color: #334155;
     transform: translateY(12px) scale(0.98);
     transition: transform 0.25s ease;

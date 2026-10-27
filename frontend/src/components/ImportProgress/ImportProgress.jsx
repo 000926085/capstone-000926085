@@ -1,16 +1,16 @@
 import React from 'react';
-import './ImportProgress.modules.css';
+import styles from './ImportProgress.module.css';
 
-export default function ImportProgress({ isOpen, currentStepIndex, steps,  currentBatch, totalBatches, err }) {
+export default function ImportProgress({ isOpen, currentStepIndex, steps, currentBatch, totalBatches, err }) {
   const isSavingBatch = totalBatches > 0 && currentBatch > 0;
 
   return (
-    <div className={`modal-overlay ${isOpen ? 'open' : ''}`}>
-      <div className="modal-content">
-        <h3 className="modal-title">Importing AniList Data</h3>
+    <div className={`${styles['modal-overlay']} ${isOpen ? styles.open : ''}`}>
+      <div className={styles['modal-content']}>
+        <h3 className={styles['modal-title']}>Importing AniList Data</h3>
 
-        <div className="modal-body">
-          <div className="steps-list">
+        <div className={styles['modal-body']}>
+          <div className={styles['steps-list']}>
             {steps.map((step, index) => {
               const isCurrent = index === currentStepIndex;
               const isPast = index < currentStepIndex;
@@ -18,13 +18,13 @@ export default function ImportProgress({ isOpen, currentStepIndex, steps,  curre
               return (
                 <div
                   key={step.key}
-                  className={`step-item ${isCurrent ? 'active' : ''} ${isPast ? 'completed' : ''}`}
+                  className={`${styles['step-item']} ${isCurrent ? styles.active : ''} ${isPast ? styles.completed : ''}`}
                 >
-                  <span className="step-icon">
+                  <span className={styles['step-icon']}>
                     {isPast ? '✓' : isCurrent ? '▶ ' : '○ '}
                   </span>
 
-                  <span className={isCurrent ? 'bold-step' : ''}>
+                  <span className={isCurrent ? styles['bold-step'] : ''}>
                     {step.label}
                   </span>
                 </div>
@@ -34,26 +34,26 @@ export default function ImportProgress({ isOpen, currentStepIndex, steps,  curre
 
           {/* Batch progress */}
           {isSavingBatch && (
-            <div className="batch-progress">
+            <div className={styles['batch-progress']}>
               <p>Batch {currentBatch} of {totalBatches}</p>
 
-              <div className="batch-progress-track">
+              <div className={styles['batch-progress-track']}>
                 <div
-                  className="batch-progress-fill"
+                  className={styles['batch-progress-fill']}
                   style={{
                     width: `${(currentBatch / totalBatches) * 100}%`
                   }}
                 />
               </div>
 
-              <p className="batch-progress-percentage">
+              <p className={styles['batch-progress-percentage']}>
                 {Math.round((currentBatch / totalBatches) * 100)}%
               </p>
             </div>
           )}
         </div>
 
-        {err && <p className="modal-error">{err}</p>}
+        {err && <p className={styles['modal-error']}>{err}</p>}
       </div>
     </div>
   );

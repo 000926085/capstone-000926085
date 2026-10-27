@@ -1,6 +1,7 @@
 import { useState } from 'react'
 import stars from "../../assets/stars.png"
-import './SearchForm.modules.css'
+
+import styles from './SearchForm.module.css'
 
 import { useImportUser } from '../../hooks/useImportUser';
 import ImportProgress from '../ImportProgress/ImportProgress';
@@ -33,11 +34,11 @@ export default function SearchForm({ onSuccess, isCarouselLoaded }) {
       <>
         <form onSubmit={handleSubmit}>
           {/* Form logo and title. */}
-          <div className="form-logo-row">
-            <img className="site-logo" src={stars} alt="AniReco stars" />
-            <div className="title-group">
-              <span className="brand-name">AniReco</span>
-              <span className="subtitle">Recommendations</span>
+          <div className={styles['form-logo-row']}>
+            <img className='site-logo' src={stars} alt="AniReco stars" />
+            <div className={styles['title-group']}>
+              <span className='brand-name'>AniReco</span>
+              <span className='subtitle'>Recommendations</span>
             </div>
           </div>
 

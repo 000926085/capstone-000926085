@@ -4,7 +4,7 @@ import wheel from "../../assets/wheel.png"
 
 import { attemptLogin } from '../../utils/attemptLogin'
 
-import './Login.modules.css'
+import styles from './Login.module.css'
 
 export default function Login() {
     const [username, setUsername] = useState('');
@@ -39,11 +39,11 @@ export default function Login() {
     return (
         <>
             <form onSubmit={handleSubmit}>
-                <div className="form-logo-row">
-                    <img className="site-logo" src={wheel} alt="Admin wheel icon." />
-                    <div className="title-group">
-                        <span className="brand-name">AniReco</span>
-                        <span className="subtitle">Admin Panel</span>
+                <div className={styles['form-logo-row']}>
+                    <img className='site-logo' src={wheel} alt="Admin wheel icon." />
+                    <div className={styles['title-group']}>
+                        <span className='brand-name'>AniReco</span>
+                        <span className='subtitle'>Admin Panel</span>
                     </div>
                 </div>
 
@@ -61,7 +61,7 @@ export default function Login() {
 
                 <label>
                     Password
-                    <div className="password-row">
+                    <div className={styles['password-row']}>
                         <input
                             type={showPassword ? 'text' : 'password'} 
                             id="password_input"
@@ -72,7 +72,7 @@ export default function Login() {
                         />
                         <button
                             type="button"
-                            className="password-toggle-btn-beside"
+                            className={styles['password-toggle-btn-beside']}
                             onClick={() => setShowPassword(!showPassword)}
                             aria-label="Toggle password visibility"
                             data-testid="toggle-visibility"
@@ -92,7 +92,7 @@ export default function Login() {
                     </div>
                 </label>
 
-                {error && <div className="error-message" style={{ color: 'red' }} data-testid="error-msg">{error}</div>}
+                {error && <div className={styles['error-message']} style={{ color: 'red' }} data-testid="error-msg">{error}</div>}
                 <button type="submit" data-testid="sign-in-button">Sign In</button>
             </form>
         </>
