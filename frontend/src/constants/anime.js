@@ -1,4 +1,5 @@
-export const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
+export const API_URL = import.meta.env.VITE_API_URL || 
+  (import.meta.env.PROD ? 'https://anireco-app-dag83.ondigitalocean.app/capstone-000926085-backend' : 'http://localhost:8000');
 
 export const DEFAULT_POSTERS = [
         { cover: 'https://s4.anilist.co/file/anilistcdn/media/anime/cover/medium/bx180746-eqDiHbzoHMFh.jpg', anilist_id: 180746 },
