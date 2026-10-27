@@ -30,6 +30,8 @@ export default function Login() {
         try {
             const data = await attemptLogin(username, password);
             localStorage.setItem('admin_token', data.access_token);
+            localStorage.setItem('admin_username', username);
+            localStorage.setItem('admin_role_id', data.role);
             navigate('/admin-dashboard'); 
         } catch (err) {
             setError(err.message);

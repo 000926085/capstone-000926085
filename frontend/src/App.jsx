@@ -7,7 +7,9 @@ import Recommendations from './components/Recommendations/Recommendations'
 import Login from './components/Login/Login'
 import AdminDashboard from './components/AdminDashboard/AdminDashboard'
 import ProtectedRoute from './components/ProtectedRoute'
+import DirectorRoute from './components/DirectorRoute'
 import Carousel from './components/Carousel/Carousel'
+import AdminSetup from './components/AdminSetup/AdminSetup'
 
 import './App.css'
 
@@ -33,6 +35,13 @@ function App() {
             <ProtectedRoute>
               <AdminDashboard />
             </ProtectedRoute>
+          }/>
+
+          <Route path="/admin-setup"
+          element={
+            <DirectorRoute>
+              <AdminSetup />
+            </DirectorRoute>
           }/>
         </Routes>
       </main>

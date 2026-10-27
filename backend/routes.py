@@ -89,13 +89,38 @@ async def login(credentials: LoginRequest):
         if not bcrypt.checkpw(input_password_bytes, stored_hash_bytes):
             raise HTTPException(status_code=401, detail="Invalid credentials. Please try again.")
 
-        return {"access_token": "mock_token", "token_type": "bearer"}
+        return {"access_token": "mock_token", "token_type": "bearer", "role": account_query.data[0]["role_id"]}
 
     except HTTPException as he:
         raise he
     except Exception as e:
         logger.error(f"Login failed for '{credentials.username}': {str(e)}")
         raise HTTPException(status_code=500, detail="An unexpected error occurred during login.")
+
+@app.post("/api/create-admin")
+async def create_admin(credentials: LoginRequest):
+    try:
+        existing = (
+            supabase.table("accounts")
+            .select("username")
+            .eq("username", credentials.username)
+            .execute()
+        )
+        if existing.data:
+            raise HTTPException(status_code=400, detail="Username already exists.")
+
+        hashed_password = bcrypt.hashpw(credentials.password.encode('utf-8'), bcrypt.gensalt()).decode("utf-8")
+        supabase.table("accounts").insert({
+            "username": credentials.username,
+            "password": hashed_password,
+            "role_id": 2
+        }).execute()
+        
+        return {"message": f"Account '{credentials.username}' created successfully."}
+        
+
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/api/import-anilist-user/{username}")
 def import_anilist_user(username: str):

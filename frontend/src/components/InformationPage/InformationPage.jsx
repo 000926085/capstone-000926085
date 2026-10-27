@@ -12,7 +12,7 @@ export default function InformationPage({anime_id, onClose}) {
             : null;
 
     return (
-        <div className={`${styles['modal-overlay']} ${styles.open}`} onClick={onClose}>
+        <div className={`${styles['modal-overlay']} ${styles.open}`} onClick={onClose} data-testid="modal-overlay">
             <div className={styles['modal-content']} onClick={(e) => e.stopPropagation()} >
                 {loading && <p>Loading anime details...</p>}
                 {error && <p className={styles.error}>{error}</p>}
@@ -31,6 +31,7 @@ export default function InformationPage({anime_id, onClose}) {
                                 allow="accelerometer; autoplay; clipboard-write; encrypted-media; gyroscope; picture-in-picture; web-share"
                                 referrerPolicy="strict-origin-when-cross-origin"
                                 allowFullScreen
+                                data-testid="trailer-iframe"
                             />
                         </div>
                     </section>

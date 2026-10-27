@@ -10,6 +10,8 @@ export default function AdminDashboard() {
     const navigate = useNavigate();
     const handleLogout = () => {
         localStorage.removeItem('admin_token');
+        localStorage.removeItem('admin_username');
+        localStorage.removeItem('admin_role_id');
         navigate('/login', { replace: true });
     };
 
@@ -29,7 +31,7 @@ export default function AdminDashboard() {
                 </div>
             </div>
 
-            <button onClick={handleLogout}>Logout</button>
+            <button onClick={handleLogout} data-testid="logout">Logout</button>
         </>
     );
 }

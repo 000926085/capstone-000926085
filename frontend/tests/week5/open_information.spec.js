@@ -7,13 +7,17 @@ test('Modal opens and fetches data from the AniList API.', async ({ page }) => {
     await page.getByRole('button', { name: 'Find Recommendations' }).click();
     await page.getByTestId('details-btn').nth(1).click();
 
-    const modalOverlay = page.locator('.modal-overlay.open');
+    const modalOverlay = page.getByTestId('modal-overlay');
     await expect(modalOverlay).toBeVisible();
 
-    const iframe = page.locator('.trailer-container iframe');
+    await expect(page.locator('text=Loading trailer...')).not.toBeVisible();
+    const iframe = page.getByTestId('trailer-iframe');
     const noTrailerText = page.locator('text=No trailer found');
-    await Promise.race([
-        expect(iframe).toBeVisible({ timeout: 10000 }),
-        expect(noTrailerText).toBeVisible({ timeout: 10000 })
-    ]);
+
+    const hasIframe = await iframe.isVisible().catch(() => false);
+    if (hasIframe) {
+        await expect(iframe).toBeVisible();
+    } else {
+        await expect(noTrailerText).toBeVisible();
+    }
 });
