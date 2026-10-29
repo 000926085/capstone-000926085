@@ -1,3 +1,10 @@
+.dashboard-container {
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    width: 100%;
+}
+
 .card-container {
     display: flex;
     flex-direction: row;
@@ -10,7 +17,7 @@
     display: flex;
     flex-direction: column;
     justify-content: space-between;
-    width: 220px;
+    min-width: 300px;
     padding: 16px 20px;
     border-radius: 12px;
     color: #ffffff;
@@ -26,5 +33,20 @@
 }
 
 .api-card {
-    background: linear-gradient(90deg, #22ff2d 0%, #95ff9a 100%);
+    background: linear-gradient(90deg, #17b41f 0%, #50da57 100%);
+}
+
+.card-description {
+    margin: 4px 0 0;
+    font-size: 0.8rem;
+    line-height: 1.5;
+    opacity: 0.9;
+}
+
+.timestamp-container {
+    width: 100%;
+    text-align: center;
+    margin: 0 0 20px;
+    color: #64748b;
+    font-size: 0.875rem;
 }

@@ -567,7 +567,24 @@ def admin_panel_fetch_users():
     try:
         supabase_query = (
             supabase.table("users")
-            .select("*", count="exact")
+            .select("""
+                *,
+                user_genres_affinity(
+                    genre_id,
+                    affinity,
+                    genres(name)
+                ),
+                user_directors_affinity(
+                    director_id,
+                    affinity,
+                    directors(name)
+                ),
+                user_studios_affinity(
+                    studio_id,
+                    affinity,
+                    studios(name)
+                )
+            """, count="exact")
             .execute()
         )
 

@@ -6,10 +6,12 @@ import SearchForm from './components/SearchForm/SearchForm'
 import Recommendations from './components/Recommendations/Recommendations'
 import Login from './components/Login/Login'
 import AdminDashboard from './components/AdminDashboard/AdminDashboard'
-import ProtectedRoute from './components/ProtectedRoute'
-import DirectorRoute from './components/DirectorRoute'
 import Carousel from './components/Carousel/Carousel'
 import AdminSetup from './components/AdminSetup/AdminSetup'
+import UserDirectory from './components/UserDirectory/UserDirectory'
+
+import ProtectedRoute from './components/ProtectedRoute'
+import DirectorRoute from './components/DirectorRoute'
 
 import './App.css'
 
@@ -34,6 +36,12 @@ function App() {
           element={
             <ProtectedRoute>
               <AdminDashboard />
+            </ProtectedRoute>
+          }/>
+          <Route path="/admin-user-directory" 
+          element={
+            <ProtectedRoute>
+              <UserDirectory />
             </ProtectedRoute>
           }/>
 

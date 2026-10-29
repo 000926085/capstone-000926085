@@ -1,0 +1,71 @@
+.container {
+  padding: 20px;
+}
+
+.table-wrapper {
+  border: 1px solid #e0e0e0;
+  border-radius: 8px; 
+  overflow: hidden; 
+  box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+}
+
+.user-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  text-align: left; 
+}
+
+.user-table thead {
+  background-color: white;
+  border-bottom: 2px solid #eaeaea; 
+}
+
+.user-table th {
+  padding: 16px 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-transform: capitalize; 
+}
+
+.user-table td {
+  padding: 14px 20px;
+  color: #4a4a4a;
+  border-bottom: 1px solid #eaeaea; 
+}
+
+.id-cell {
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+.user-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9; 
+}
+
+.user-table tbody tr:nth-child(odd) {
+  background-color: white; 
+}
+
+.user-table tbody tr:hover {
+  background-color: #f1f1f1; 
+}
+
+.no-data-cell {
+  text-align: center;
+  color: #888;
+  font-style: italic;
+  padding: 40px;
+}
+
+.stats-link span {
+  color: #3888ff;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.stats-link span:hover {
+  color: #2256a3;
+}

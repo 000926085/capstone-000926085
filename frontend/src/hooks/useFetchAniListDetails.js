@@ -15,12 +15,9 @@ export function useFetchAniListDetails({anime_id}) {
 
             try {
                 const res = await fetch(`${API_URL}/api/fetch-anilist-details/${anime_id}`);
-                console.log(res);
-                
                 if (!res.ok) throw new Error('Could not load anime details');
                 
                 const data = await res.json();
-                console.log(data);
                 if (data) { 
                     setDetails(data);
                 } 

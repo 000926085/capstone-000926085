@@ -4,42 +4,50 @@
   padding: 10px 32px;
   align-items: center;
   background: linear-gradient(90deg, rgb(57, 110, 179) 0%, rgb(42, 67, 225) 100%);
+  min-height: 84px; 
+  box-sizing: border-box;
 }
 
-.nav-info, .nav-buttons {
+.nav-info {
   display: flex;
-  justify-content: center;
   align-items: center;
   gap: 8px;
   color: white;
-  cursor: pointer;
+}
+
+.nav-info-admin {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  color: white;
+  flex: 1; 
+}
+
+.nav-buttons {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end; 
+  gap: 24px;
+  color: white;
+  flex: 1; 
+}
+
+.role-chip {
+  font-size: 0.75rem;
+  padding: 3px 10px;
+  border-radius: 360px;
+  font-weight: 500;
+  flex-shrink: 0;
+  white-space: nowrap;
+  background-color: #e0f2fe;
+  color: #0284c7;
+  line-height: 1.4;
 }
 
 .text-group {
   display: flex;
   align-items: baseline;
   gap: 8px;
-}
-
-/* Reposition navbar on smaller screens */
-@media (max-width: 768px) {
-  .nav {
-    flex-direction: column;
-    justify-content: center;
-    gap: 12px;
-    padding: 16px;
-  }
-  @media (max-width: 480px) {
-      .nav-info {
-        flex-direction: column;
-        gap: 4px;
-      }
-      .text-group {
-        flex-direction: column;
-        align-items: center;
-        gap: 2px;
-      }
-    }
 }
 
 .site-logo {
@@ -50,6 +58,7 @@
 .img-button {
   width: 50px;
   height: 50px;
+  cursor: pointer;
 }
 
 .title {
@@ -62,3 +71,29 @@
   font-style: italic;
 }
 
+@media (max-width: 768px) {
+  .nav {
+    flex-direction: column;
+    justify-content: center;
+    gap: 12px;
+    padding: 16px;
+  }
+
+  .nav-info-admin,
+  .nav-buttons {
+    justify-content: center;
+    flex: initial;
+  }
+
+  @media (max-width: 480px) {
+    .nav-info {
+      flex-direction: column;
+      gap: 4px;
+    }
+    .text-group {
+      flex-direction: column;
+      align-items: center;
+      gap: 2px;
+    }
+  }
+}

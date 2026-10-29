@@ -4,7 +4,9 @@ import logo from '../../assets/logo.png'
 import home from '../../assets/home.png'
 import login from '../../assets/login.png'
 
-import styles from  "./Navbar.module.css"
+import AdminNavbar from '../AdminNavbar/AdminNavbar'
+
+import styles from "./Navbar.module.css"
 
 /**
  * Constructs a navbar that can be used to reach different endpoints of the website.
@@ -29,33 +31,46 @@ export default function Navbar() {
 
     return (
         <nav className={styles['nav']}>
+            {showWelcome ? (
+                <>
+                    <div className={styles['nav-info-admin']}>
+                        <span style={{ fontSize: '32px' }}>
+                            <span style={{ fontStyle: 'italic' }}>Welcome, </span>
+                            <span style={{ fontWeight: '500' }}>{username}!</span>
+                        </span>
+                        <div className={styles['role-chip']}>
+                            {role == '1' ? "Director" : "Admin"}
+                        </div>
+                    </div>
 
-            {showWelcome
-                ? <div className={styles['nav-info']}>
-                    <span style={{fontSize: '32px'}}>
-                        <span style={{fontStyle: 'italic'}}>Welcome, </span><span style={{fontWeight: '500'}}>{username}!</span>
-                    </span>
-                    <div>{role == '1' ? "Director" : "Admin"}</div>
-
-                    {role == '1'
-                        ? <div onClick={() => navigate('/admin-setup')}>Admin Setup</div>
-                        : ''}
-                </div>
-                
-
-                : <div className={styles['nav-info']} onClick={() => navigate('/')}>
-                    <img className='site-logo' src={logo}></img>
+                    <AdminNavbar role={role} />
+                </>
+            ) : (
+                <div className={styles['nav-info']} style={{ cursor: 'pointer' }} onClick={() => navigate('/')}>
+                    <img className={styles['site-logo']} src={logo} alt="Logo" />
                     <div className={styles['text-group']}>
                         <span className={styles['title']}>AniReco</span>
                         <span className={styles['slogan']}>Tuned to you.</span>
                     </div>
                 </div>
-            }
+            )}
 
-            <div className={styles['nav-buttons']} style={{"gap": "24px"}}>
-                <img className={styles['img-button']} src={home} title="Home" onClick={() => navigate('/')}></img>
-                <img className={styles['img-button']} src={login} title="Login" onClick={() => navigate('/login')}></img>
+            <div className={styles['nav-buttons']} style={{ gap: "24px" }}>
+                <img 
+                    className={styles['img-button']} 
+                    src={home} 
+                    title="Home" 
+                    onClick={() => navigate('/')} 
+                    alt="Home" 
+                />
+                <img 
+                    className={styles['img-button']} 
+                    src={login} 
+                    title="Login" 
+                    onClick={() => navigate('/login')} 
+                    alt="Login" 
+                />
             </div>
         </nav>
-    )
+    );
 }
