@@ -23,3 +23,35 @@
   color: #333333;
   margin-top: 4px;
 }
+
+.shared-text-input {
+  flex: 1;
+  padding: 7px 12px;
+  background-color: #f8fafc;
+  border: 1px solid #dbeafe;
+  border-radius: 8px;
+  outline: none;
+  color: #334155;
+  font: inherit;
+  font-size: 0.825rem;
+  transition:
+      border-color 0.2s ease,
+      box-shadow 0.2s ease,
+      background-color 0.2s ease;
+  box-sizing: border-box;
+}
+
+.shared-text-input::placeholder {
+  color: #94a3b8;
+}
+
+.shared-text-input:focus {
+  background-color: #ffffff;
+  border-color: #3b82f6;
+  box-shadow: 0 0 0 3px rgba(59, 130, 246, 0.12);
+}
+
+.shared-text-input:focus-visible {
+  outline: 2px solid #3b82f6;
+  outline-offset: 2px;
+}

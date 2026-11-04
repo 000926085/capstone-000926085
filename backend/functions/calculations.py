@@ -406,3 +406,17 @@ def calculate_desirability(
         "details": details,
         "total_score": round(total_score, 2)
     }
+
+def compute_composite_affinities(user_affinity_dicts):
+    totals = {}
+    counts = {}
+    
+    for aff_dict in user_affinity_dicts:
+        if not aff_dict:
+            continue
+        for key, multiplier in aff_dict.items():
+            if multiplier is not None:
+                totals[key] = totals.get(key, 0.0) + multiplier
+                counts[key] = counts.get(key, 0) + 1
+
+    return {key: totals[key] / counts[key] for key in totals}

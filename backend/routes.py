@@ -5,7 +5,7 @@ import requests
 import asyncio
 
 from logging.handlers import RotatingFileHandler
-from fastapi import FastAPI, HTTPException, Request
+from fastapi import FastAPI, HTTPException, Request, Query
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from supabase_client import supabase
@@ -303,6 +303,265 @@ def anime_carousel():
 
     return supabase_query.data
 
+@app.get("/api/blended-recommendations")
+def get_blended_recommendations(usernames: str = Query(..., description="Comma-separated list of usernames")):
+    user_list = [u.strip() for u in usernames.split(",") if u.strip()]
+    if not user_list:
+        raise HTTPException(status_code=400, detail="No usernames provided.")
+
+    # fetch user IDs and metadata in bulk
+    users_res = (
+        supabase.table("users")
+        .select("user_id, username, last_updated, pfp")
+        .in_("username", user_list)
+        .execute()
+    )
+    if not users_res or not users_res.data:
+        raise HTTPException(status_code=404, detail="None of the specified users were found.")
+
+    found_users = users_res.data
+    user_ids = [int(u["user_id"]) for u in found_users if u.get("user_id") is not None]
+    primary_user = found_users[0]
+    group_users = [
+        {
+            "username": u["username"],
+            "pfp": u.get("pfp") or 'https://s4.anilist.co/file/anilistcdn/user/avatar/large/b535745-ucaA3muNCFk9.jpg'
+        }
+        for u in found_users
+    ]
+
+    exclusion_data = []
+    chunk_size = 1000
+    start = 0
+    
+    while True:
+        res = (
+            supabase.table("users_anime")
+            .select("user_id, anime_id, list_status")
+            .in_("user_id", user_ids)
+            .range(start, start + chunk_size - 1)
+            .execute()
+        )
+        chunk = res.data if res else []
+        exclusion_data.extend(chunk)
+        
+        if len(chunk) < chunk_size:
+            break
+        start += chunk_size
+
+    excluded_anime_ids = set()
+    for item in exclusion_data:
+        uid = item.get("user_id")
+        aid = item.get("anime_id")
+        status = str(item.get("list_status") or "").upper().strip()
+
+        if status not in ["PLANNING", "PAUSED"]:
+            excluded_anime_ids.add(aid)
+
+    all_user_anime_res = (
+        supabase.table("users_anime")
+        .select("""
+            user_id,
+            anime_id,
+            list_status,
+            score,
+            anime(
+                *,
+                anime_genres(genres(name)),
+                anime_tags(similarity, tags(name)),
+                anime_studios(studios(name)),
+                anime_directors(directors(name)),
+                anilist_recommendations!anilist_recommendations_anime_id_fkey(
+                    rank,
+                    recommended_anime_id
+                )
+            )
+        """)
+        .in_("user_id", user_ids)
+        .limit(10000)
+        .execute()
+    )
+    all_items = all_user_anime_res.data if all_user_anime_res else []
+
+    # bulk fetch affinities for all users simultaneously
+    genres_res = supabase.table("user_genres_affinity").select("user_id, affinity, genres(name)").in_("user_id", user_ids).execute()
+    tags_res = supabase.table("user_tags_affinity").select("user_id, affinity, tags(name)").in_("user_id", user_ids).execute()
+    studios_res = supabase.table("user_studios_affinity").select("user_id, affinity, studios(name)").in_("user_id", user_ids).execute()
+    directors_res = supabase.table("user_directors_affinity").select("user_id, affinity, directors(name)").in_("user_id", user_ids).execute()
+
+    raw_user_genres = {uid: {} for uid in user_ids}
+    raw_user_tags = {uid: {} for uid in user_ids}
+    raw_user_studios = {uid: {} for uid in user_ids}
+    raw_user_directors = {uid: {} for uid in user_ids}
+
+    for item in genres_res.data or []:
+        if item.get("genres") and item.get("affinity"):
+            raw_user_genres[item["user_id"]][item["genres"]["name"]] = item["affinity"]["multiplier"]
+    for item in tags_res.data or []:
+        if item.get("tags") and item.get("affinity"):
+            raw_user_tags[item["user_id"]][item["tags"]["name"]] = item["affinity"]["multiplier"]
+    for item in studios_res.data or []:
+        if item.get("studios") and item.get("affinity"):
+            raw_user_studios[item["user_id"]][item["studios"]["name"]] = item["affinity"]["multiplier"]
+    for item in directors_res.data or []:
+        if item.get("directors") and item.get("affinity"):
+            raw_user_directors[item["user_id"]][item["directors"]["name"]] = item["affinity"]["multiplier"]
+
+    # compute composite (averaged) affinities across the user group
+    composite_genres = calculations.compute_composite_affinities(list(raw_user_genres.values()))
+    composite_tags = calculations.compute_composite_affinities(list(raw_user_tags.values()))
+    composite_studios = calculations.compute_composite_affinities(list(raw_user_studios.values()))
+    composite_directors = calculations.compute_composite_affinities(list(raw_user_directors.values()))
+
+    # build composite watch history maps & per-user anime status maps
+    composite_history_by_studio = {}
+    composite_history_by_director = {}
+    user_anime_maps = {uid: {} for uid in user_ids}
+    all_popularities = []
+
+    for item in all_items:
+        uid = item["user_id"]
+        anime_id = item["anime_id"]
+        status = item.get("list_status")
+        score = item.get("score")
+        history_anime = item.get("anime")
+
+        user_anime_maps[uid][anime_id] = {"status": status, "score": score}
+
+        if history_anime and history_anime.get("popularity") is not None:
+            all_popularities.append(history_anime["popularity"])
+
+        if not history_anime or score is None or score <= 0:
+            continue
+
+        anime_entry = {
+            "title": history_anime.get("title"),
+            "anilist_id": history_anime.get("anilist_id"),
+            "cover": history_anime.get("cover"),
+            "user_score": score
+        }
+
+        for relation in history_anime.get("anime_studios", []):
+            s_name = relation.get("studios", {}).get("name")
+            if s_name:
+                composite_history_by_studio.setdefault(s_name, []).append(anime_entry)
+
+        for relation in history_anime.get("anime_directors", []):
+            d_name = relation.get("directors", {}).get("name")
+            if d_name:
+                composite_history_by_director.setdefault(d_name, []).append(anime_entry)
+
+    for shows in composite_history_by_studio.values():
+        shows.sort(key=lambda s: s["user_score"], reverse=True)
+    for shows in composite_history_by_director.values():
+        shows.sort(key=lambda s: s["user_score"], reverse=True)
+
+    composite_max_popularity = max(all_popularities, default=1)
+
+    # 3. BUILD CANDIDATE POOL USING THE FULL LIGHTWEIGHT EXCLUSION SET
+    candidate_items_map = {}
+    candidate_planning_users = {} 
+
+    for item in all_items:
+        anime_id = item.get("anime_id")
+        
+        # Check against absolute lightweight exclusion set
+        if anime_id in excluded_anime_ids:
+            continue
+
+        anime = item.get("anime")
+        if not anime:
+            continue
+
+        status = str(item.get("list_status") or "").upper().strip()
+        if status in ["PLANNING", "PAUSED"]:
+            candidate_planning_users.setdefault(anime_id, set()).add(item["user_id"])
+            if anime_id not in candidate_items_map:
+                candidate_items_map[anime_id] = item
+
+    # calculate desirability for candidates using the composite virtual user profile
+    blended_list = []
+    OVERLAP_BOOST_FACTOR = 0.2
+
+    for anime_id, item in candidate_items_map.items():
+        anime = item.get("anime")
+        if not anime:
+            continue
+
+        genres = [r["genres"]["name"] for r in anime.get("anime_genres", []) if r.get("genres")]
+        tags = [{"name": r["tags"]["name"], "similarity": r["similarity"]} for r in anime.get("anime_tags", []) if r.get("tags")]
+        studios = [r["studios"]["name"] for r in anime.get("anime_studios", []) if r.get("studios")]
+        directors = [r["directors"]["name"] for r in anime.get("anime_directors", []) if r.get("directors")]
+
+        # aggregate AniList recommendations across all users in the group
+        anilist_recs = []
+        for rec in anime.get("anilist_recommendations", []):
+            rec_id = rec["recommended_anime_id"]
+            watched_entry = None
+            for uid in user_ids:
+                match = user_anime_maps[uid].get(rec_id)
+                if match and (match.get("status") or match.get("score")):
+                    watched_entry = match
+                    if match.get("score") is not None and match.get("score") > 0:
+                        break
+            anilist_recs.append({
+                "rank": rec["rank"],
+                "score": watched_entry["score"] if watched_entry else None,
+                "status": watched_entry["status"] if watched_entry else None
+            })
+
+        clean_anime = dict(anime)
+        clean_anime.pop("anime_genres", None)
+        clean_anime.pop("anime_tags", None)
+        clean_anime.pop("anime_studios", None)
+        clean_anime.pop("anime_directors", None)
+        clean_anime.pop("anilist_recommendations", None)
+
+        desirability_obj = calculations.calculate_desirability(
+            clean_anime,
+            composite_max_popularity,
+            anilist_recs,
+            genres,
+            tags,
+            studios,
+            directors,
+            composite_genres,
+            composite_tags,
+            composite_studios,
+            composite_directors,
+            user_history_by_studio=composite_history_by_studio,
+            user_history_by_director=composite_history_by_director
+        )
+
+        overlap_count = len(candidate_planning_users.get(anime_id, set()))
+        base_score = desirability_obj.get("total_score", 0)
+        boost_multiplier = 1.0 + (OVERLAP_BOOST_FACTOR * max(0, overlap_count - 1))
+        final_score = base_score * boost_multiplier
+        desirability_obj["total_score"] = round(final_score, 4)
+        desirability_obj["overlap_count"] = overlap_count
+
+        anime_payload = {
+            **clean_anime,
+            "genres": genres,
+            "tags": tags,
+            "studios": studios,
+            "list_status": item["list_status"],
+            "anilist_recs": anilist_recs,
+            "desirability": desirability_obj
+        }
+        blended_list.append(anime_payload)
+
+    # sort by score descending and assign ranks
+    ranked_anime = sorted(blended_list, key=lambda x: x["desirability"]["total_score"], reverse=True)
+    for index, anime in enumerate(ranked_anime):
+        anime["rank"] = index + 1
+
+    return {
+        "last_updated": primary_user.get("last_updated"),
+        "group_users": group_users,
+        "planning_anime": ranked_anime
+    }
+
 @app.get("/api/fetch-planning-data/{username}")
 def fetch_planning_data(username: str):
     """
@@ -372,6 +631,11 @@ def fetch_planning_data(username: str):
         .eq("user_id", user_id)
         .execute()
     )
+
+    excluded_anime_ids = [
+        item["anime_id"] for item in user_anime_res.data
+        if item.get("list_status") not in ["PLANNING", "PAUSED"]
+    ]
 
     user_history_by_studio = {}
     user_history_by_director = {}
@@ -559,8 +823,8 @@ def fetch_planning_data(username: str):
                 user_history_by_director=user_history_by_director
             )
         })
-
-    return {"last_updated": data["last_updated"], "planning_anime": anime_list, "pfp": pfp}
+        
+    return {"last_updated": data["last_updated"], "planning_anime": anime_list, "pfp": pfp, "excluded_anime_ids": excluded_anime_ids}
 
 @app.get("/api/admin-panel-fetch-users")
 def admin_panel_fetch_users():

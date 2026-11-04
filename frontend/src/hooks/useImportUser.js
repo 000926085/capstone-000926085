@@ -22,7 +22,7 @@ export function useImportUser() {
   const importUser = async (username, onSuccess) => {
     setErr(null);
     setCurrentStepIndex(0);
-    setShowModal(false);
+    setShowModal(false); 
     setCurrentBatch(0);
     setTotalBatches(0);
 
@@ -30,6 +30,7 @@ export function useImportUser() {
     if (!trimmedUser) return false;
 
     setLoading(true);
+    let hasError = false;
 
     try {
       const res = await fetch(
@@ -58,8 +59,9 @@ export function useImportUser() {
         const data = JSON.parse(line);
 
         if (data.error) {
+          hasError = true;
           setErr(data.error);
-          setShowModal(true);
+          setShowModal(true); 
           return false;
         }
 
@@ -70,7 +72,6 @@ export function useImportUser() {
 
           if (index !== -1) {
             setCurrentStepIndex(index);
-
             if (index > 0) {
               setShowModal(true);
             }
@@ -93,11 +94,9 @@ export function useImportUser() {
 
       while (true) {
         const { value, done } = await reader.read();
-
         if (done) break;
 
         buffer += decoder.decode(value, { stream: true });
-
         const lines = buffer.split('\n');
         buffer = lines.pop();
 
@@ -109,27 +108,33 @@ export function useImportUser() {
         }
       }
 
-      // Process a final line if the stream ends without a newline.
       buffer += decoder.decode();
 
       if (buffer.trim()) {
         if (!processLine(buffer)) return false;
       }
 
-      if (onSuccess) onSuccess(trimmedUser);
-      return true;
+      if (!hasError) {
+        if (onSuccess) onSuccess(trimmedUser);
+        return true;
+      }
+      return false;
 
     } catch (error) {
       console.error('Import failed:', error);
+      hasError = true;
       setErr('Failed to connect to the server.');
       setShowModal(true);
       return false;
-
     } finally {
       setLoading(false);
-      setTimeout(() => {
+      if (hasError) {
+        setTimeout(() => {
+          setShowModal(false);
+        }, 3000);
+      } else {
         setShowModal(false);
-      }, 3000);
+      }
     }
   };
 

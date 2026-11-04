@@ -1,12 +1,16 @@
 import { useMemo, useState } from 'react';
-import { useParams, Link } from 'react-router-dom';
+import { useParams, Link, useNavigate, useSearchParams } from 'react-router-dom';
 
 import AnimeCard from '../AnimeCard/AnimeCard';
 import FilterBar from '../FilterBar/FilterBar';
 import Pagination from '../Pagination/Pagination';
+import UserHeader from '../UserHeader/UserHeader';
+import ImportProgress from '../ImportProgress/ImportProgress';
 
 import { useRecommendations } from '../../hooks/useRecommendations';
+import { useRecommendationsMultiple } from '../../hooks/useRecommendationsMultiple';
 import { filterAnime } from '../../utils/filterAnime';
+import { useImportUser } from '../../hooks/useImportUser';
 
 import styles from './Recommendations.module.css'
 
@@ -16,10 +20,45 @@ const LIST_STATUSES = [
 ]
 
 export default function Recommendations() {
-    const { username } = useParams();
-    const { anime, lastUpdated, pfp, loading, error } = useRecommendations(username);
+    const { username: primaryUser } = useParams();
+    const [searchParams, setSearchParams] = useSearchParams();
+    const navigate = useNavigate();
 
-    // State and handlers for controls.
+    const additionalUsersParam = searchParams.get('users');
+    const additionalUsers = additionalUsersParam ? additionalUsersParam.split(',').filter(Boolean) : [];
+    const allUsers = useMemo(() => [primaryUser, ...additionalUsers], [primaryUser, additionalUsers]);
+    const {
+        importUser,
+        showModal,
+        currentStepIndex,
+        STEPS,
+        currentBatch,
+        totalBatches,
+        err
+    } = useImportUser();
+
+    const handleUsersChange = async (newUsers) => {
+        if (newUsers.length === 0) return;
+        const addedUser = newUsers.find(u => !allUsers.includes(u));
+        if (addedUser) {
+            const success = await importUser(addedUser);
+            if (!success) { return; }
+        }
+
+        const [newPrimary, ...rest] = newUsers;
+        if (newPrimary !== primaryUser) {
+            const newSearch = rest.length > 0 ? `?users=${rest.join(',')}` : '';
+            navigate(`/recommendations/${newPrimary}${newSearch}`);
+        } else {
+            setSearchParams(rest.length > 0 ? { users: rest.join(',') } : {});
+        }
+        setCurrentPage(0);
+    };
+
+    const { username } = useParams();
+    const { anime, lastUpdated, group_users, loading, error } = useRecommendationsMultiple(allUsers);
+
+    // Filters anime by the list statuses selected.
     const [selectedStatuses, setSelectedStatuses] = useState(LIST_STATUSES);
     const handleStatusChange = (status) => {
         setSelectedStatuses(
@@ -32,23 +71,24 @@ export default function Recommendations() {
         setCurrentPage(0);
     };
 
+    // Search term for filtering anime.
     const [search, setSearch] = useState("");
     const handleSearchChange = (e) => {
         setSearch(e.target.value);
         setCurrentPage(0);
     };
+    const filteredAnime = useMemo(
+        () => filterAnime(anime, selectedStatuses, search),
+        [anime, selectedStatuses, search]
+    );
 
+    // Pagination, used for tracking current page and how many anime to show on each page.
     const [currentPage, setCurrentPage] = useState(0);
     const [itemsPerPage, setItemsPerPage] = useState(10);
     const handleItemsPerPageChange = (e) => {
         setItemsPerPage(Number(e.target.value));
         setCurrentPage(0);
     };
-    
-    const filteredAnime = useMemo(
-        () => filterAnime(anime, selectedStatuses, search),
-        [anime, selectedStatuses, search]
-    );
 
     const pageCount = Math.ceil(filteredAnime.length / itemsPerPage);
     const itemOffset = currentPage * itemsPerPage;
@@ -80,13 +120,21 @@ export default function Recommendations() {
 
     return (
         <div className={styles['recommendations-container']}>
-            <div className={styles['user-container']}>
-            <img className={styles['userpfp']} src={pfp} alt={username} />
-                <div className={styles['user-info']}>
-                    <h2 style={{color: "black"}}>Recommendations for {username}</h2>
-                    <h3>Last Updated: {lastUpdated}</h3>
-                </div>
-            </div>
+            <UserHeader 
+                initialUsers={allUsers} 
+                onUsersChange={handleUsersChange} 
+                group_users={group_users}
+                lastUpdated={lastUpdated} 
+            />
+
+            <ImportProgress
+                isOpen={showModal}
+                currentStepIndex={currentStepIndex}
+                steps={STEPS}
+                currentBatch={currentBatch}
+                totalBatches={totalBatches}
+                err={err}
+            />
 
             <FilterBar
                 selectedStatuses={selectedStatuses}
