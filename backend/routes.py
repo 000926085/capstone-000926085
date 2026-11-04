@@ -123,7 +123,7 @@ async def create_admin(credentials: LoginRequest):
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/api/import-anilist-user/{username}")
-def import_anilist_user(username: str):
+def import_anilist_user(username: str, force: bool = False):
     async def generate_progress():
         try:
             yield json.dumps({"step": "supabase_check", "message": "Checking database for username..."}) + "\n"
@@ -143,7 +143,7 @@ def import_anilist_user(username: str):
                 or helpers.hour_difference(supabase_query.data[0]["last_updated"]) >= 24
             )
 
-            if not stale:
+            if not stale and not force:
                yield json.dumps({"step": "complete", "message": f"User {username} is up to date."}) + "\n"
                return
 

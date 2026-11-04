@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useMemo } from 'react';
 import { API_URL } from '../constants/anime';
 
 export function useUserDirectory() {
-    const [users, setUsers] = useState(null);
+    const [users, setUsers] = useState([]);
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState('');
 
@@ -26,6 +26,16 @@ export function useUserDirectory() {
         fetchUsers();
     }, []);
 
-    return { users: users, loading: loading, error: error };
+    const sortedUsers = useMemo(() => {
+        if (!users) return [];
+
+        return [...users].sort((a, b) => {
+            if (a.user_id < b.user_id) return -1;
+            if (a.user_id > b.user_id) return 1;
+            return 0;
+        });
+    }, [users]);
+
+    return { users: sortedUsers, loading: loading, error: error };
 }
 

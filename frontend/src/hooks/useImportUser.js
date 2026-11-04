@@ -19,7 +19,7 @@ export function useImportUser() {
   const [currentBatch, setCurrentBatch] = useState(0);
   const [totalBatches, setTotalBatches] = useState(0);
 
-  const importUser = async (username, onSuccess) => {
+  const importUser = async (username, onSuccess, force = false) => {
     setErr(null);
     setCurrentStepIndex(0);
     setShowModal(false); 
@@ -33,13 +33,11 @@ export function useImportUser() {
     let hasError = false;
 
     try {
-      const res = await fetch(
-        `${API_URL}/api/import-anilist-user/${encodeURIComponent(trimmedUser)}`,
-        {
-          method: 'POST',
-          headers: { 'Content-Type': 'application/json' },
-        }
-      );
+      const url = `${API_URL}/api/import-anilist-user/${encodeURIComponent(trimmedUser)}${force ? '?force=true' : ''}`;
+      const res = await fetch(url, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+      });
 
       if (!res.ok) {
         throw new Error('Import request failed');

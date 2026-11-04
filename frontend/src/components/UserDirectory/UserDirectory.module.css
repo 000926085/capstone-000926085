@@ -1,12 +1,15 @@
 .container {
+  width: 100%;
+  max-width: 1200px;
+  margin: 0 auto;
   padding: 20px;
+  box-sizing: border-box;
 }
 
 .table-wrapper {
-  border: 1px solid #e0e0e0;
-  border-radius: 8px; 
-  overflow: hidden; 
-  box-shadow: 0 1px 3px rgba(0,0,0,0.1); 
+  background: transparent;
+  box-shadow: none;
+  border: none;
 }
 
 .user-table {
@@ -52,13 +55,6 @@
   background-color: #f1f1f1; 
 }
 
-.no-data-cell {
-  text-align: center;
-  color: #888;
-  font-style: italic;
-  padding: 40px;
-}
-
 .stats-link span {
   color: #3888ff;
   cursor: pointer;
@@ -68,4 +64,76 @@
 
 .stats-link span:hover {
   color: #2256a3;
+}
+
+.stats-link span + span {
+  margin-left: 16px;
+}
+
+.timestamp-subtitle {
+  display: block;
+  font-style: italic;
+  font-size: 14px;
+  color: #7e7e7e;
+  margin-top: 4px;
+}
+
+@media (max-width: 768px) {
+  .table-wrapper {
+    border: none;
+    box-shadow: none;
+    overflow: visible; 
+  }
+
+  .user-table, 
+  .user-table tbody, 
+  .user-table tr, 
+  .user-table td {
+    display: block;
+    width: 100%;
+    box-sizing: border-box;
+  }
+
+  .user-table thead {
+    display: none; 
+  }
+
+  .user-table tbody tr {
+    background-color: white;
+    border: 1px solid #e0e0e0;
+    border-radius: 8px;
+    margin-bottom: 16px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.1);
+    overflow: hidden;
+  }
+
+  .user-table tbody tr:hover {
+    background-color: white; 
+  }
+
+  .user-table td {
+    display: flex;
+    justify-content: space-between;
+    align-items: center;
+    padding: 12px 16px;
+    text-align: right;
+    border-bottom: 1px solid #eaeaea;
+  }
+
+  .user-table td:last-child {
+    border-bottom: none;
+  }
+
+  .user-table td::before {
+    content: attr(data-label);
+    font-weight: 600;
+    color: #1a1a1a;
+    text-align: left;
+    margin-right: 16px;
+  }
+}
+
+.ood span {
+  color: red;
+  font-weight: 500;
 }
