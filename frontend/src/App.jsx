@@ -9,9 +9,11 @@ import AdminDashboard from './components/AdminDashboard/AdminDashboard'
 import Carousel from './components/Carousel/Carousel'
 import AdminSetup from './components/AdminSetup/AdminSetup'
 import UserDirectory from './components/UserDirectory/UserDirectory'
+import AdminSetPassword from './components/AdminSetPassword/AdminSetPassword'
 
 import ProtectedRoute from './components/ProtectedRoute'
 import DirectorRoute from './components/DirectorRoute'
+import PasswordRoute from './components/PasswordRoute'
 
 import './App.css'
 
@@ -43,6 +45,12 @@ function App() {
             <ProtectedRoute>
               <UserDirectory />
             </ProtectedRoute>
+          }/>
+          <Route path="/admin-setpassword" 
+          element={
+            <PasswordRoute>
+              <AdminSetPassword />
+            </PasswordRoute>
           }/>
 
           <Route path="/admin-setup"

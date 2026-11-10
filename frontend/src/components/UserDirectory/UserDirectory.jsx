@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react';
 
 import StatisticsModal from '../StatisticsModal/StatisticsModal'
 import ImportProgress from '../ImportProgress/ImportProgress';
+import Pagination from '../Pagination/Pagination';
 
 import { useUserDirectory } from '../../hooks/useUserDirectory';
 import { useImportUser } from '../../hooks/useImportUser';
@@ -60,10 +61,22 @@ export default function UserDirectory() {
         }
     };
     
+    const [currentPage, setCurrentPage] = useState(0);
+    const [itemsPerPage, setItemsPerPage] = useState(10);
+    const pageCount = Math.ceil(currentUsers.length / itemsPerPage);
+    const itemOffset = currentPage * itemsPerPage;
+    const currentItems = currentUsers.slice(itemOffset, itemOffset + itemsPerPage);
+    const handlePageClick = (event) => {
+        setCurrentPage(event.selected);
+        window.scrollTo({top: 0, behavior: 'smooth'});
+    };
+
     if (!currentUsers.length) { return; }
 
     return (
         <div className={styles['container']}>
+            <h2 className='subtitle'>Showing {currentItems.length} of {currentUsers.length} users</h2>
+
             <ImportProgress
                 isOpen={showModal}
                 currentStepIndex={currentStepIndex}
@@ -85,7 +98,7 @@ export default function UserDirectory() {
                         </tr>
                     </thead>
                     <tbody>
-                        {currentUsers.map((user) => {
+                        {currentItems.map((user) => {
                             const isOutdated = timeDifference(user.last_updated).includes('day');
 
                             return (
@@ -110,6 +123,12 @@ export default function UserDirectory() {
                         })}
                     </tbody>
                 </table>
+
+                <Pagination
+                    pageCount={pageCount}
+                    currentPage={currentPage}
+                    onPageChange={handlePageClick}
+                />
             </div>
 
             <StatisticsModal user={selectedUser} onClose={() => setSelectedUser(null)} />

@@ -17,9 +17,7 @@ export default function Login() {
     // Redirect to the dashboard if already logged in.
     useEffect(() => {
         const token = localStorage.getItem('admin_token');
-        if (token) {
-            navigate('/admin-dashboard', { replace: true });
-        }
+        if (token) { navigate('/admin-dashboard', { replace: true }); }
     }, [navigate]);
 
     // Attempt a login.
@@ -29,6 +27,11 @@ export default function Login() {
 
         try {
             const data = await attemptLogin(username, password);
+            if (data.require_password_change) { 
+                navigate('/admin-setpassword', { state: { canChangePassword: true, username } }); 
+                return;
+            }
+
             localStorage.setItem('admin_token', data.access_token);
             localStorage.setItem('admin_username', username);
             localStorage.setItem('admin_role_id', data.role);
@@ -94,7 +97,7 @@ export default function Login() {
                     </div>
                 </label>
 
-                {error && <div className={styles['error-message']} style={{ color: 'red' }} data-testid="error-msg">{error}</div>}
+                {error && <div className={styles['error-message']} style={{ color: 'red', marginBottom: '8px' }} data-testid="error-msg">{error}</div>}
                 <button type="submit" data-testid="sign-in-button">Sign In</button>
             </form>
         </>

@@ -89,6 +89,9 @@ async def login(credentials: LoginRequest):
         if not bcrypt.checkpw(input_password_bytes, stored_hash_bytes):
             raise HTTPException(status_code=401, detail="Invalid credentials. Please try again.")
 
+        if not user.get("password_set", False):
+            return { "require_password_change": True }
+
         return {"access_token": "mock_token", "token_type": "bearer", "role": account_query.data[0]["role_id"]}
 
     except HTTPException as he:
@@ -113,6 +116,7 @@ async def create_admin(credentials: LoginRequest):
         supabase.table("accounts").insert({
             "username": credentials.username,
             "password": hashed_password,
+            "password_set": False,
             "role_id": 2
         }).execute()
         
@@ -121,6 +125,32 @@ async def create_admin(credentials: LoginRequest):
 
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
+
+@app.post("/api/update-password")
+async def update_password(credentials: LoginRequest):
+    existing = (
+        supabase.table("accounts")
+        .select("username")
+        .eq("username", credentials.username)
+        .execute()
+    )
+    if not existing.data:
+        raise HTTPException(status_code=404, detail="Username does not exist.")
+
+    try:
+        hashed_password = bcrypt.hashpw(
+            credentials.password.encode('utf-8'), 
+            bcrypt.gensalt()
+        ).decode("utf-8")
+
+        supabase.table("accounts").update(
+            {"password": hashed_password, "password_set": True}
+        ).eq("username", credentials.username).execute()
+
+        return {"message": f"Password for '{credentials.username}' updated successfully."}
+        
+    except Exception as e:
+        raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
 
 @app.post("/api/import-anilist-user/{username}")
 def import_anilist_user(username: str, force: bool = False):

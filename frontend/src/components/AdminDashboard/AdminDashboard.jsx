@@ -18,6 +18,8 @@ export default function AdminDashboard() {
     const lastUpdated = timestamp
     ? new Date(timestamp)
     : null;
+
+    if (loading) { return; }
     
     return (
         <div className={styles['dashboard-container']}>

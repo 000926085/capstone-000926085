@@ -45,14 +45,11 @@ export default function AdminSetup() {
                 />
             </label>
 
-            {error && <div style={{ color: 'red' }}>{error}</div>}
+            {error && <div style={{ color: 'red', marginBottom: '4px' }}>{error}</div>}
             {successMessage && <div style={{ color: 'green' }}>{successMessage}</div>}
 
             <button type="submit" disabled={loading}>
                 {loading ? 'Creating...' : 'Create Account'}
-            </button>
-            <button type="button" onClick={() => navigate('/admin-dashboard')}>
-                Back to Dashboard
             </button>
         </form>
     );
