@@ -11,7 +11,7 @@ from fastapi.responses import JSONResponse, StreamingResponse
 from supabase_client import supabase
 from pydantic import BaseModel
 import bcrypt
-from datetime import datetime
+from datetime import datetime, timedelta, timezone
 
 import functions.helpers as helpers
 import functions.calculations as calculations
@@ -82,15 +82,51 @@ async def login(credentials: LoginRequest):
             raise HTTPException(status_code=401, detail="Invalid credentials. Please try again.")
 
         user = account_query.data[0]
+        account_id = user["account_id"]
+        role_id = user["role_id"]
         stored_hash = user["password"]
+
         input_password_bytes = credentials.password.encode("utf-8")
         stored_hash_bytes = stored_hash.encode("utf-8") if isinstance(stored_hash, str) else stored_hash
 
+        locked_until = user["locked_until"]
+        if locked_until:
+            lock_time = datetime.fromisoformat(locked_until.replace("Z", "+00:00"))
+            if datetime.now(timezone.utc) < lock_time:
+                raise HTTPException(status_code=403, detail="Account is locked due to too many failed login attempts. Please contact the director.")
+
         if not bcrypt.checkpw(input_password_bytes, stored_hash_bytes):
-            raise HTTPException(status_code=401, detail="Invalid credentials. Please try again.")
+            current_failures = user["failed_attempts"] + 1
+            update_data = {"failed_attempts": current_failures}
+
+            is_director = (role_id == 1)
+            if current_failures >= 5 and not is_director:
+                update_data["locked_until"] = (datetime.now(timezone.utc) + timedelta(days=365)).isoformat()
+
+            supabase.table("accounts").update(update_data).eq("account_id", account_id).execute()
+            attempts_left = max(0, 5 - current_failures)
+            if is_director:
+                raise HTTPException(status_code=401, detail="Invalid credentials.")
+            else:
+                attempts_left = max(0, 5 - current_failures)
+                if attempts_left == 0:
+                    raise HTTPException(
+                        status_code=403, 
+                        detail="Account is locked due to too many failed login attempts. Please contact the director."
+                    )
+                else:
+                    raise HTTPException(
+                        status_code=401, 
+                        detail=f"Invalid credentials. {attempts_left} attempts remaining before lockout."
+                    )
 
         if not user.get("password_set", False):
             return { "require_password_change": True }
+
+        supabase.table("accounts").update({
+            "failed_attempts": 0, 
+            "locked_until": None
+        }).eq("account_id", account_id).execute()
 
         return {"access_token": "mock_token", "token_type": "bearer", "role": account_query.data[0]["role_id"]}
 
