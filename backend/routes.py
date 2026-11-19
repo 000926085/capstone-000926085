@@ -5,13 +5,15 @@ import requests
 import asyncio
 
 from logging.handlers import RotatingFileHandler
-from fastapi import FastAPI, HTTPException, Request, Query
+from fastapi import FastAPI, HTTPException, Request, Query, Security, Depends
+from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
 from fastapi.middleware.cors import CORSMiddleware
 from fastapi.responses import JSONResponse, StreamingResponse
 from supabase_client import supabase
 from pydantic import BaseModel
-import bcrypt
 from datetime import datetime, timedelta, timezone
+import bcrypt
+import secrets
 
 import functions.helpers as helpers
 import functions.calculations as calculations
@@ -37,6 +39,8 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
+security = HTTPBearer()
+
 class LoginRequest(BaseModel):
     username: str
     password: str
@@ -60,6 +64,16 @@ async def global_exception_handler(request: Request, exc: Exception):
         status_code=500,
         content={"detail": "An internal server error occurred."}
     )
+
+def verify_active_session(credentials: HTTPAuthorizationCredentials = Security(security)):
+    token = credentials.credentials
+    
+    res = supabase.table("accounts").select("account_id, role_id, username").eq("session_token", token).execute()
+    
+    if not res.data or len(res.data) == 0:
+        raise HTTPException(status_code=401, detail="Invalid or expired session. Please log in again.")
+        
+    return res.data[0]
 
 @app.get("/api/test-error")
 def test_error():
@@ -123,12 +137,15 @@ async def login(credentials: LoginRequest):
         if not user.get("password_set", False):
             return { "require_password_change": True }
 
+        new_session_token = secrets.token_urlsafe(32)
+
         supabase.table("accounts").update({
             "failed_attempts": 0, 
-            "locked_until": None
+            "locked_until": None,
+            "session_token": new_session_token
         }).eq("account_id", account_id).execute()
 
-        return {"access_token": "mock_token", "token_type": "bearer", "role": account_query.data[0]["role_id"]}
+        return {"access_token": new_session_token, "token_type": "bearer", "role": role_id}
 
     except HTTPException as he:
         raise he
@@ -137,8 +154,11 @@ async def login(credentials: LoginRequest):
         raise HTTPException(status_code=500, detail="An unexpected error occurred during login.")
 
 @app.post("/api/create-admin")
-async def create_admin(credentials: LoginRequest):
+async def create_admin(credentials: LoginRequest, current_user: dict = Depends(verify_active_session) ):
     try:
+        if current_user.get("role_id") != 1:
+            raise HTTPException(status_code=403, detail="Access denied.")
+
         existing = (
             supabase.table("accounts")
             .select("username")
@@ -156,24 +176,31 @@ async def create_admin(credentials: LoginRequest):
             "role_id": 2
         }).execute()
         
-        return {"message": f"Account '{credentials.username}' created successfully."}
+        return {"message": f"Admin account '{credentials.username}' created successfully by Director {current_user.get('username')}."}
         
-
+    except HTTPException:
+        raise
     except Exception as e:
         raise HTTPException(status_code=400, detail=str(e))
 
 @app.post("/api/update-password")
-async def update_password(credentials: LoginRequest):
-    existing = (
-        supabase.table("accounts")
-        .select("username")
-        .eq("username", credentials.username)
-        .execute()
-    )
-    if not existing.data:
-        raise HTTPException(status_code=404, detail="Username does not exist.")
-
+async def update_password(credentials: LoginRequest, current_user: dict = Depends(verify_active_session)):
     try:
+        if current_user.get("role_id") not in [1, 2]:
+            raise HTTPException(
+                status_code=403, 
+                detail="Access denied. Administrator privileges required."
+            )
+
+        existing = (
+            supabase.table("accounts")
+            .select("account_id, username")
+            .eq("username", credentials.username)
+            .execute()
+        )
+        if not existing.data:
+            raise HTTPException(status_code=404, detail="Username does not exist.")
+
         hashed_password = bcrypt.hashpw(
             credentials.password.encode('utf-8'), 
             bcrypt.gensalt()
@@ -183,10 +210,97 @@ async def update_password(credentials: LoginRequest):
             {"password": hashed_password, "password_set": True}
         ).eq("username", credentials.username).execute()
 
-        return {"message": f"Password for '{credentials.username}' updated successfully."}
-        
+        return {"message": f"Password for '{credentials.username}' updated successfully by {current_user.get('username')}."}
+
     except Exception as e:
         raise HTTPException(status_code=500, detail=f"An error occurred: {str(e)}")
+
+@app.get("/api/admin-panel-fetch-users")
+def admin_panel_fetch_users(current_user: dict = Depends(verify_active_session)):
+    try:
+        if current_user.get("role_id") not in [1, 2]:
+            raise HTTPException(
+                status_code=403, 
+                detail="Access denied. Administrator privileges required."
+            )
+
+        supabase_query = (
+            supabase.table("users")
+            .select("""
+                *,
+                user_genres_affinity(
+                    genre_id,
+                    affinity,
+                    genres(name)
+                ),
+                user_directors_affinity(
+                    director_id,
+                    affinity,
+                    directors(name)
+                ),
+                user_studios_affinity(
+                    studio_id,
+                    affinity,
+                    studios(name)
+                )
+            """, count="exact")
+            .execute()
+        )
+
+        users = supabase_query.data
+        if not users or len(users) == 0:
+            return {"message": "No users found.", "users": []}
+            
+        return {"users": users}
+        
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Fetching users failed: {str(e)}")
+        raise HTTPException(status_code=500, detail="An unexpected error occurred while fetching users.")
+
+@app.get("/api/fetch-admin-dashboard")
+def fetch_admin_dashboard(current_user: dict = Depends(verify_active_session)):
+    try:
+        if current_user.get("role_id") not in [1, 2]:
+            raise HTTPException(
+                status_code=403, 
+                detail="Access denied. Administrator privileges required."
+            )
+
+        users_query = (
+            supabase.table("users")
+            .select("*", count="exact")
+            .execute()
+        )
+        users = users_query.data
+
+        anime_query = (
+            supabase.table("anime")
+            .select("*", count="exact")
+            .limit(0) 
+            .execute()
+        )
+        anime = anime_query.count
+
+        url = "https://graphql.anilist.co"
+        response = requests.post(url, json={
+            "query": gql.PING_API
+        })
+        data = response.json()
+
+        return {
+            "users": users,
+            "anime": anime,
+            "api_res": data,
+            "timestamp": datetime.now().strftime("%Y-%m-%d %I:%M %p")
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"An error occured while fetching admin dashboard details.: {str(e)}")
+        raise HTTPException(status_code=500, detail="Error fetching admin dashboard details.")
 
 @app.post("/api/import-anilist-user/{username}")
 def import_anilist_user(username: str, force: bool = False):
@@ -524,7 +638,6 @@ def get_blended_recommendations(usernames: str = Query(..., description="Comma-s
 
     composite_max_popularity = max(all_popularities, default=1)
 
-    # 3. BUILD CANDIDATE POOL USING THE FULL LIGHTWEIGHT EXCLUSION SET
     candidate_items_map = {}
     candidate_planning_users = {} 
 
@@ -892,42 +1005,6 @@ def fetch_planning_data(username: str):
         
     return {"last_updated": data["last_updated"], "planning_anime": anime_list, "pfp": pfp, "excluded_anime_ids": excluded_anime_ids}
 
-@app.get("/api/admin-panel-fetch-users")
-def admin_panel_fetch_users():
-    try:
-        supabase_query = (
-            supabase.table("users")
-            .select("""
-                *,
-                user_genres_affinity(
-                    genre_id,
-                    affinity,
-                    genres(name)
-                ),
-                user_directors_affinity(
-                    director_id,
-                    affinity,
-                    directors(name)
-                ),
-                user_studios_affinity(
-                    studio_id,
-                    affinity,
-                    studios(name)
-                )
-            """, count="exact")
-            .execute()
-        )
-
-        users = supabase_query.data
-        if not users or len(users) == 0:
-            return {"message": "No users found.", "users": []}
-            
-        return {"users": users}
-        
-    except Exception as e:
-        logger.error(f"Fetching users failed': {str(e)}")
-        raise HTTPException(status_code=500, detail="An unexpected error occurred while fetching users.")
-
 @app.get("/api/fetch-anilist-details/{anime_id}")
 def get_anilist_details(anime_id: int):
     try:
@@ -950,38 +1027,3 @@ def get_anilist_details(anime_id: int):
     except Exception as e:
         logger.error(f"AniList fetch failed for ID {anime_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Error fetching details from AniList.")
-
-@app.get("/api/fetch-admin-dashboard")
-def fetch_admin_dashboard():
-    try:
-        users_query = (
-            supabase.table("users")
-            .select("*", count="exact")
-            .execute()
-        )
-        users = users_query.data
-
-        anime_query = (
-            supabase.table("anime")
-            .select("*", count="exact")
-            .limit(0) 
-            .execute()
-        )
-        anime = anime_query.count
-
-        url = "https://graphql.anilist.co"
-        response = requests.post(url, json={
-            "query": gql.PING_API
-        })
-        data = response.json()
-
-        return {
-            "users": users,
-            "anime": anime,
-            "api_res": data,
-            "timestamp": datetime.now().strftime("%Y-%m-%d %I:%M %p")
-        }
-
-    except Exception as e:
-        logger.error(f"An error occured while fetching admin dashboard details.: {str(e)}")
-        raise HTTPException(status_code=500, detail="Error fetching admin dashboard details.")

@@ -8,13 +8,13 @@ def format_date(date):
     args:
         date: dict, contains the y, m, d values.
     returns:
-        str, representation of a formatted date. 
+        str, representation of a formatted date.
     """
     if not date:
         return None
-    
+
     year = date.get("year")
-    month = date.get("month") 
+    month = date.get("month")
     day = date.get("day")
 
     if not month or not day:

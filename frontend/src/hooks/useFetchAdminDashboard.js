@@ -59,8 +59,19 @@ export function useFetchAdminDashboard() {
             try {
                 setLoading(true);
 
-                const res = await fetch( `${API_URL}/api/fetch-admin-dashboard`);
-                if (!res.ok) { throw new Error('An error occurred during your request.');}
+                const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
+                const res = await fetch(`${API_URL}/api/fetch-admin-dashboard`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    }
+                });
+
+                if (!res.ok) { 
+                    const errorData = await res.json().catch(() => ({}));
+                    throw new Error(errorData.detail || 'An error occurred during your request.');
+                }
 
                 const data = await res.json();
                 const apiOnline =
