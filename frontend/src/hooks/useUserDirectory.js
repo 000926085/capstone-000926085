@@ -12,7 +12,14 @@ export function useUserDirectory() {
             setError('');
 
             try {
-                const res = await fetch(`${API_URL}/api/admin-panel-fetch-users`);
+                const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
+                const res = await fetch(`${API_URL}/api/admin-panel-fetch-users`, {
+                    method: 'GET',
+                    headers: {
+                        'Content-Type': 'application/json',
+                        ...(token ? { 'Authorization': `Bearer ${token}` } : {})
+                    }
+                });
                 if (!res.ok) throw new Error('Could not load users.');
 
                 const data = await res.json();

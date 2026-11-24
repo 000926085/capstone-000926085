@@ -19,6 +19,14 @@ import functions.helpers as helpers
 import functions.calculations as calculations
 import queries as gql
 
+CHILD_TABLES = [
+    "user_genres_affinity",
+    "user_tags_affinity",
+    "user_studios_affinity",
+    "user_directors_affinity",
+    "users_anime",
+]
+
 # Logging setup.
 logger = logging.getLogger("app_logger")
 logger.setLevel(logging.ERROR)
@@ -452,6 +460,39 @@ def import_anilist_user(username: str, force: bool = False):
             yield json.dumps({"error": "An unexpected error occurred during import.", "status_code": 500}) + "\n"
 
     return StreamingResponse(generate_progress(), media_type="application/x-ndjson")
+
+@app.post("/api/delete-anilist-user/{username}")
+def delete_anilist_user(username: str):
+    try:
+        user_res = (
+            supabase.table("users")
+            .select("user_id, username")
+            .eq("username", username)
+            .execute()
+        )
+
+        if not user_res.data:
+            raise HTTPException(status_code=404, detail=f"User '{username}' not found.")
+        user_id = user_res.data[0]["user_id"]
+
+        for table in CHILD_TABLES:
+            supabase.table(table).delete().eq("user_id", user_id).execute()
+        supabase.table("users").delete().eq("user_id", user_id).execute()
+
+        return {
+            "message": f"Successfully deleted user '{username}' (ID: {user_id}).",
+            "user_id": user_id,
+            "username": username,
+        }
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.error(f"Failed to delete user '{username}': {str(e)}")
+        raise HTTPException(
+            status_code=500,
+            detail="An unexpected error occurred while deleting the user.",
+        )
 
 @app.get("/api/user-exists/{username}")
 def user_exists(username: str):
