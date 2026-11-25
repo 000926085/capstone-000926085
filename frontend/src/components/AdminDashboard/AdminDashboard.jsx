@@ -9,9 +9,9 @@ export default function AdminDashboard() {
 
     const navigate = useNavigate();
     const handleLogout = () => {
-        localStorage.removeItem('admin_token');
-        localStorage.removeItem('admin_username');
-        localStorage.removeItem('admin_role_id');
+        sessionStorage.removeItem('admin_token');
+        sessionStorage.removeItem('admin_username');
+        sessionStorage.removeItem('admin_role_id');
         navigate('/login', { replace: true });
     };
 

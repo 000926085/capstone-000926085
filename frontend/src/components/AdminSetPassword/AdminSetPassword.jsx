@@ -27,9 +27,9 @@ export default function AdminSetPassword() {
 
         try {
             const data = await updatePassword(username, password);
-            localStorage.setItem('admin_token', data.access_token);
-            localStorage.setItem('admin_username', username);
-            localStorage.setItem('admin_role_id', data.role);
+            sessionStorage.setItem('admin_token', data.access_token);
+            sessionStorage.setItem('admin_username', username);
+            sessionStorage.setItem('admin_role_id', data.role);
             navigate('/admin-dashboard');
         } catch (err) {
             setError(err.message);

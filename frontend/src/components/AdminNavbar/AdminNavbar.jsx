@@ -16,7 +16,7 @@ export default function AdminNavbar({role}) {
                 </span>
                 <span className={styles['divider']}>|</span>
                 
-                <span className={`${styles['nav-item']} ${isActive('/anime-management') ? styles['active'] : ''}`} onClick={() => navigate('/anime-management')}>
+                <span className={`${styles['nav-item']} ${isActive('/admin-anime-management') ? styles['active'] : ''}`} onClick={() => navigate('/admin-anime-management')}>
                     Anime Management
                 </span>
                 <span className={styles['divider']}>|</span>

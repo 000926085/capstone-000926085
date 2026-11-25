@@ -1068,3 +1068,25 @@ def get_anilist_details(anime_id: int):
     except Exception as e:
         logger.error(f"AniList fetch failed for ID {anime_id}: {str(e)}")
         raise HTTPException(status_code=500, detail="Error fetching details from AniList.")
+
+@app.get("/api/fetch-all-anime")
+def fetch_all_anime():
+    print("fetching all anime")
+    try:
+        anime_res = (
+            supabase.table("anime")
+            .select("*", count="exact")
+            .neq("title", "null")
+            .execute()
+        )
+
+        return anime_res.data
+
+    except HTTPException:
+        raise
+    except Exception as e:
+        logger.exception("Failed to fetch all anime from Supabase: %s", e)
+        raise HTTPException(
+            status_code=500,
+            detail=f"Error fetching anime from Supabase: {str(e)}"
+        )

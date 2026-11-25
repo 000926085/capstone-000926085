@@ -1,0 +1,72 @@
+.container {
+    width: 100%;
+    max-width: 1200px;
+    margin: 0 auto;
+    padding: 24px 20px;
+    box-sizing: border-box;
+    overflow-x: clip;
+}
+
+.table-wrapper {
+  background: transparent;
+  box-shadow: none;
+  border: none;
+}
+
+.anime-table {
+  width: 100%;
+  border-collapse: collapse;
+  font-family: system-ui, -apple-system, sans-serif;
+  font-size: 16px;
+  text-align: left; 
+}
+
+.anime-table thead {
+  background-color: white;
+  border-bottom: 2px solid #eaeaea; 
+}
+
+.anime-table th {
+  padding: 16px 20px;
+  font-weight: 600;
+  color: #1a1a1a;
+  text-transform: capitalize; 
+}
+
+.anime-table td {
+  padding: 14px 20px;
+  color: #4a4a4a;
+  border-bottom: 1px solid #eaeaea; 
+}
+
+.id-cell {
+  color: #1a1a1a;
+  font-weight: 500;
+}
+
+.anime-table tbody tr:nth-child(even) {
+  background-color: #f9f9f9; 
+}
+
+.anime-table tbody tr:nth-child(odd) {
+  background-color: white; 
+}
+
+.anime-table tbody tr:hover {
+  background-color: #f1f1f1; 
+}
+
+.stats-link span {
+  color: #3888ff;
+  cursor: pointer;
+  text-decoration: underline;
+  transition: color 0.2s ease;
+}
+
+.stats-link span:hover {
+  color: #2256a3;
+}
+
+.stats-link span + span {
+  margin-left: 16px;
+}

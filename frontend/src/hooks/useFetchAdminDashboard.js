@@ -59,7 +59,7 @@ export function useFetchAdminDashboard() {
             try {
                 setLoading(true);
 
-                const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
+                const token = sessionStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
                 const res = await fetch(`${API_URL}/api/fetch-admin-dashboard`, {
                     method: 'GET',
                     headers: {

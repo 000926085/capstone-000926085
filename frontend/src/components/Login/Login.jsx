@@ -16,7 +16,7 @@ export default function Login() {
 
     // Redirect to the dashboard if already logged in.
     useEffect(() => {
-        const token = localStorage.getItem('admin_token');
+        const token = sessionStorage.getItem('admin_token');
         if (token) { navigate('/admin-dashboard', { replace: true }); }
     }, [navigate]);
 
@@ -32,9 +32,9 @@ export default function Login() {
                 return;
             }
 
-            localStorage.setItem('admin_token', data.access_token);
-            localStorage.setItem('admin_username', username);
-            localStorage.setItem('admin_role_id', data.role);
+            sessionStorage.setItem('admin_token', data.access_token);
+            sessionStorage.setItem('admin_username', username);
+            sessionStorage.setItem('admin_role_id', data.role);
             navigate('/admin-dashboard'); 
         } catch (err) {
             setError(err.message);

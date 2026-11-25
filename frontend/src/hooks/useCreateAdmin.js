@@ -12,7 +12,7 @@ export function useCreateAdmin() {
         setSuccessMessage('');
 
         try {
-            const token = localStorage.getItem('admin_token');
+            const token = sessionStorage.getItem('admin_token');
             const response = await fetch(`${API_URL}/api/create-admin`, {
                 method: 'POST',
                 headers: {

@@ -12,7 +12,7 @@ export function useUserDirectory() {
             setError('');
 
             try {
-                const token = localStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
+                const token = sessionStorage.getItem('admin_token') || sessionStorage.getItem('admin_token');
                 const res = await fetch(`${API_URL}/api/admin-panel-fetch-users`, {
                     method: 'GET',
                     headers: {

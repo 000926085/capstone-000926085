@@ -10,6 +10,7 @@ import Carousel from './components/Carousel/Carousel'
 import AdminSetup from './components/AdminSetup/AdminSetup'
 import UserDirectory from './components/UserDirectory/UserDirectory'
 import AdminSetPassword from './components/AdminSetPassword/AdminSetPassword'
+import AdminAnimeManagement from './components/AdminAnimeManagement/AdminAnimeManagement'
 
 import ProtectedRoute from './components/ProtectedRoute'
 import DirectorRoute from './components/DirectorRoute'
@@ -38,6 +39,12 @@ function App() {
           element={
             <ProtectedRoute>
               <AdminDashboard />
+            </ProtectedRoute>
+          }/>
+          <Route path="/admin-anime-management" 
+          element={
+            <ProtectedRoute>
+              <AdminAnimeManagement />
             </ProtectedRoute>
           }/>
           <Route path="/admin-user-directory" 

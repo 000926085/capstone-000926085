@@ -19,10 +19,10 @@ export default function Navbar() {
     const [role, setRole] = useState(null);
 
     useEffect(() => {
-        const storedUsername = localStorage.getItem('admin_username');
+        const storedUsername = sessionStorage.getItem('admin_username');
         if (storedUsername) { setUsername(storedUsername); }
 
-        const roleId = localStorage.getItem('admin_role_id');
+        const roleId = sessionStorage.getItem('admin_role_id');
         if (roleId) { setRole(roleId); }
     }, [location]);
 
